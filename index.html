@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>행사계획 체커</title>
+<style>
+:root{
+  --bg:#f4f3ef; --surface:#fcfcfb; --card:#ffffff; --line:#e4e2dc; --line2:#d6d3cb;
+  --ink:#0b0b0b; --ink2:#52514e; --ink3:#7d7b75;
+  --accent:#2a78d6; --accent-d:#1c5cab; --accent-l:#e7f0fc;
+  --good:#0ca30c; --good-t:#006300; --good-l:#e6f5e6;
+  --bad:#d03b3b; --bad-t:#a52a2a; --bad-l:#fbe9e9;
+  --warn:#fab219; --warn-t:#7a5200; --warn-l:#fff4d9;
+  --muted-bar:#c9c6bd;
+  --r:10px; --sh:0 1px 2px rgba(0,0,0,.05),0 2px 8px rgba(0,0,0,.04);
+  font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-size:14px;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--ink2)} .faint{color:var(--ink3)} .small{font-size:12px}
+.hide{display:none!important}
+
+/* header */
+header{position:sticky;top:0;z-index:30;background:var(--card);border-bottom:1px solid var(--line)}
+.hbar{display:flex;align-items:center;gap:10px;padding:10px 16px;max-width:1280px;margin:0 auto}
+.brand{font-weight:800;font-size:16px;letter-spacing:-.3px;white-space:nowrap}
+.brand small{display:block;font-weight:500;font-size:11px;color:var(--ink3);letter-spacing:0}
+.hspace{flex:1}
+.chip-user{border:1px solid var(--line2);background:var(--surface);border-radius:20px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap}
+.conn{font-size:11px;padding:3px 8px;border-radius:20px;white-space:nowrap}
+.conn.on{background:var(--good-l);color:var(--good-t)} .conn.off{background:#eeece6;color:var(--ink2)}
+nav.tabs{display:flex;gap:2px;max-width:1280px;margin:0 auto;padding:0 12px}
+nav.tabs button{border:0;background:none;padding:10px 14px;cursor:pointer;color:var(--ink2);font-weight:600;border-bottom:2px solid transparent}
+nav.tabs button.on{color:var(--ink);border-bottom-color:var(--ink)}
+main{max-width:1280px;margin:0 auto;padding:16px 16px 96px}
+.outbox{background:var(--warn-l);color:var(--warn-t);border-radius:8px;padding:8px 12px;margin-bottom:12px;display:flex;gap:10px;align-items:center}
+
+/* filters */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;margin-bottom:14px}
+.filters label{font-size:12px;color:var(--ink2);display:flex;align-items:center;gap:6px}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--card);padding:6px 10px;cursor:pointer;font-size:13px}
+.seg button.on{background:var(--ink);color:#fff}
+select,input[type=text],input[type=number],input[type=date],input[type=month],input[type=search],input[type=url],input[type=password],textarea{
+  border:1px solid var(--line2);border-radius:8px;background:var(--card);padding:7px 9px;min-height:36px;max-width:100%}
+textarea{width:100%;min-height:64px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+
+.btn{border:1px solid var(--line2);background:var(--card);border-radius:8px;padding:8px 13px;cursor:pointer;font-weight:600;white-space:nowrap;min-height:36px}
+.btn:hover{background:var(--surface)}
+.btn.pri{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.pri:hover{background:#2b2b2b}
+.btn.good{background:var(--good-t);border-color:var(--good-t);color:#fff}
+.btn.bad{color:var(--bad-t);border-color:#e9b9b9}
+.btn.sm{padding:5px 9px;font-size:12px;min-height:30px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* cards & kpi */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+.sec{padding:16px;margin-bottom:14px}
+.sec h3{margin:0 0 2px;font-size:15px}
+.sec .sub{margin:0 0 12px;font-size:12px;color:var(--ink2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}
+.kpi{padding:12px 14px}
+.kpi .l{font-size:12px;color:var(--ink2)}
+.kpi .v{font-size:24px;font-weight:800;letter-spacing:-.5px;margin-top:2px}
+.kpi .v small{font-size:13px;font-weight:600;color:var(--ink2);margin-left:2px}
+.kpi .s{font-size:11px;color:var(--ink3);margin-top:2px}
+.alerts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+
+/* badges */
+.b{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:700;border-radius:6px;padding:2px 7px;white-space:nowrap}
+.b.ok{background:var(--good-l);color:var(--good-t)}
+.b.no{background:var(--bad-l);color:var(--bad-t)}
+.b.na{background:#eeece6;color:var(--ink2)}
+.b.wa{background:var(--warn-l);color:var(--warn-t)}
+.st{font-size:11px;font-weight:700;border-radius:20px;padding:2px 8px;border:1px solid}
+.st.s계획{color:var(--accent-d);border-color:#b7d3f6;background:var(--accent-l)}
+.st.s승인{color:var(--good-t);border-color:#b5dfb5;background:var(--good-l)}
+.st.s최종승인{color:#fff;border-color:var(--good-t);background:var(--good-t)}
+.it .ck{width:20px;height:20px;margin:0 8px 0 0;flex:0 0 auto;cursor:pointer}
+.bulk{position:sticky;top:96px;z-index:20;background:var(--ink);color:#fff;border-radius:10px;padding:10px 12px;margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bulk .btn{min-height:32px}
+.tl{list-style:none;margin:6px 0 0;padding:0;font-size:12px}
+.tl li{padding:4px 0;border-bottom:1px dashed var(--line);color:var(--ink2)}
+.tl li:last-child{border-bottom:0}
+.st.s반려{color:var(--bad-t);border-color:#efc2c2;background:var(--bad-l)}
+.st.s마감{color:#fff;border-color:#3a3936;background:#3a3936}
+
+/* bars (html charts) */
+.hb{display:grid;grid-template-columns:minmax(70px,140px) 1fr auto;gap:6px 10px;align-items:center}
+.hb .lab{font-size:12px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hb .trk{height:14px;background:#efede8;border-radius:0 4px 4px 0;position:relative}
+.hb .fill{height:100%;background:var(--accent);border-radius:0 4px 4px 0;min-width:2px}
+.hb .val{font-size:12px;color:var(--ink2);text-align:right;min-width:54px}
+.cols{display:flex;align-items:flex-end;gap:10px;height:180px;padding:8px 4px 0;border-bottom:1px solid var(--line2);position:relative}
+.cols .c{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;cursor:default}
+.cols .c .bar{width:min(46px,80%);border-radius:4px 4px 0 0;background:var(--accent);min-height:1px}
+.cols .c .bar.mute{background:var(--muted-bar)}
+.cols .c .cv{font-size:12px;color:var(--ink2);margin-bottom:3px}
+.cols-x{display:flex;gap:10px;padding:5px 4px 0}
+.cols-x div{flex:1;text-align:center;font-size:11px;color:var(--ink2)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--ink2);margin-bottom:8px;flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+#tip{position:fixed;z-index:100;pointer-events:none;background:#1f1f1d;color:#fff;font-size:12px;padding:6px 9px;border-radius:6px;line-height:1.45;max-width:260px;display:none;white-space:pre-line}
+
+/* table */
+.tw{overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13px;background:var(--card)}
+th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{background:var(--surface);font-size:12px;color:var(--ink2);font-weight:700;position:sticky;top:0;cursor:pointer;user-select:none}
+th.r,td.r{text-align:right}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:#faf9f6}
+th .ar{font-size:10px;margin-left:3px;color:var(--ink3)}
+
+/* list */
+.lst{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
+.it{padding:12px 14px;cursor:pointer;transition:border-color .15s}
+.it:hover{border-color:var(--ink3)}
+.it .t{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.it .nm{font-weight:700;font-size:15px}
+.it .meta{font-size:12px;color:var(--ink2);margin-top:3px}
+.it .bd{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.empty{padding:40px 16px;text-align:center;color:var(--ink2)}
+
+/* modal */
+#ov{position:fixed;inset:0;background:rgba(20,20,18,.45);z-index:50;display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px}
+#ov.on{display:flex}
+.md{background:var(--bg);border-radius:14px;width:100%;max-width:1000px;box-shadow:0 10px 40px rgba(0,0,0,.25);margin-bottom:40px}
+.md .mh{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--card);border-radius:14px 14px 0 0;position:sticky;top:-24px;z-index:2}
+.md .mh h2{margin:0;font-size:16px;flex:1}
+.md .mb{padding:14px 16px}
+.md .mf{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--line);background:var(--card);border-radius:0 0 14px 14px;position:sticky;bottom:-24px;flex-wrap:wrap}
+.x{border:0;background:none;font-size:22px;cursor:pointer;line-height:1;padding:4px 8px;color:var(--ink2)}
+.fs{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.fs h4{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:8px}
+.fs h4 .n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-size:12px}
+.fg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.f>span{font-size:12px;color:var(--ink2);font-weight:600}
+.f>span b{color:var(--bad)}
+.f input,.f select{width:100%}
+.span2{grid-column:span 2} .span4{grid-column:1/-1}
+.ln{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--surface)}
+.ln .lh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ln .lg{display:grid;grid-template-columns:2fr 1.05fr 1.75fr 1fr 1fr;gap:8px}
+.calc{margin-top:9px;font-size:12px;color:var(--ink2);display:flex;gap:6px 14px;flex-wrap:wrap;align-items:center;padding-top:9px;border-top:1px dashed var(--line2)}
+.calc b{color:var(--ink)}
+.qty{display:flex;gap:4px}
+.qty input{flex:1;min-width:58px}
+.qty select{width:auto;flex:0 0 auto}
+.ph{display:flex;gap:8px;flex-wrap:wrap}
+.ph .th{width:86px;height:86px;border-radius:8px;overflow:hidden;position:relative;background:#e8e6e0;display:grid;place-items:center;cursor:zoom-in}
+.ph .th img{width:100%;height:100%;object-fit:cover}
+.ph .th .rm{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;font-size:13px;line-height:22px;padding:0}
+.ph .add{width:86px;height:86px;border:1.5px dashed var(--line2);border-radius:8px;display:grid;place-items:center;cursor:pointer;color:var(--ink2);font-size:12px;text-align:center;background:var(--card)}
+.dl{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 16px}
+.dl div span{display:block;font-size:12px;color:var(--ink2)}
+.dl div b{font-weight:600}
+.review{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:12px}
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:80;display:none;align-items:center;justify-content:center;cursor:zoom-out}
+#lb.on{display:flex} #lb img{max-width:95vw;max-height:92vh}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1f1f1d;color:#fff;padding:10px 16px;border-radius:8px;z-index:120;font-size:13px;display:none;max-width:90vw}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #ccc;border-top-color:var(--ink);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+#loading{position:fixed;top:64px;right:16px;z-index:40;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-size:12px;box-shadow:var(--sh);display:none}
+.set{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;font-size:13px}
+.note{font-size:12px;color:var(--ink2);line-height:1.6}
+.warnbox{background:var(--warn-l);color:var(--warn-t);border-radius:8px;padding:8px 10px;font-size:12px;margin-top:8px}
+.fab{display:none}
+
+@media (max-width:1000px){
+  .kpis{grid-template-columns:repeat(3,1fr)}
+  .grid2,.set{grid-template-columns:1fr}
+  .fg{grid-template-columns:1fr 1fr}
+  .ln .lg{grid-template-columns:1fr 1fr}
+  .ln .lg .pf{grid-column:1/-1}
+  .dl{grid-template-columns:1fr 1fr}
+}
+@media (max-width:640px){
+  html,body{font-size:15px}
+  .hbar{padding:8px 12px;gap:6px}
+  .brand small{display:none}
+  nav.tabs{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);z-index:30;justify-content:space-around;padding:0 0 env(safe-area-inset-bottom)}
+  nav.tabs button{flex:1;border-bottom:0;border-top:2px solid transparent;padding:12px 4px;font-size:13px}
+  nav.tabs button.on{border-top-color:var(--ink)}
+  main{padding:12px 10px 90px}
+  .kpis{grid-template-columns:1fr 1fr}
+  .kpi .v{font-size:21px}
+  .lst{grid-template-columns:1fr}
+  #ov{padding:0}
+  .md{border-radius:0;min-height:100%;margin:0}
+  .md .mh{border-radius:0;top:0} .md .mf{border-radius:0;bottom:0}
+  .fg{grid-template-columns:1fr}
+  .span2{grid-column:auto}
+  .qty{flex-direction:column}
+  .qty select{width:100%}
+  .filters{padding:8px}
+  .hb{grid-template-columns:84px 1fr auto}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="hbar">
+    <div class="brand">행사계획 체커<small>대리점 월간 행사계획 점검</small></div>
+    <div class="hspace"></div>
+    <span id="conn" class="conn off">로컬</span>
+    <button class="chip-user" id="userChip" onclick="openUser()">사용자 선택</button>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-v="dash" class="on">대시보드</button>
+    <button data-v="list">행사목록</button>
+    <button data-v="new">+ 계획등록</button>
+    <button data-v="set">설정</button>
+  </nav>
+</header>
+<div id="loading"><span class="spin"></span> 불러오는 중</div>
+<main id="main"></main>
+<div id="ov"></div>
+<div id="lb" onclick="this.classList.remove('on')"><img alt=""></div>
+<div id="tip"></div>
+<div id="toast"></div>
+<datalist id="dl-prod"></datalist>
+
+<script>
+/* =========================================================
+   설정값 (판정 기준) — 여기만 바꾸면 전체에 반영됩니다
+   ========================================================= */
+const RULE = {
+  RATE_MIN: 0.20,     // 행사율 20% 이상
+  MARGIN_MAX: 0.15,   // 대리점 마진율 15% 이하
+  BANDS: [            // 행사율 구간
+    { k: '10% 미만', max: 0.10 },
+    { k: '10~20%', max: 0.20 },
+    { k: '20~30%', max: 0.30 },
+    { k: '30~40%', max: 0.40 },
+    { k: '40~50%', max: 0.50 },
+    { k: '50% 이상', max: Infinity }
+  ]
+};
+const STATUSES = ['계획', '승인', '최종승인', '반려', '마감'];
+const ST_LABEL = { '계획': '담당 검토 대기', '승인': '담당승인', '최종승인': '최종승인', '반려': '반려', '마감': '마감' };
+const stl = s => ST_LABEL[s] || s;
+// 폐점·통합된 대리점: 마스터 엑셀을 다시 올려도 오른쪽 대리점으로 바꿔 읽음
+const DEALER_ALIAS = { '남구미': '북구미' };
+const CDN = {
+  xlsx: 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+  h2c: 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
+  jspdf: 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'
+};
+const EMBED_MASTER = {"ver":"2026-11-24b","dealers":[{"n":"경산","o":"서원일","g":"대구권"},{"n":"대명","o":"서원일","g":"대구권"},{"n":"봉덕","o":"서원일","g":"대구권"},{"n":"상주","o":"서원일","g":"북부권"},{"n":"서안동","o":"서원일","g":"북부권"},{"n":"성당","o":"서원일","g":"대구권"},{"n":"송현","o":"서원일","g":"대구권"},{"n":"시지","o":"서원일","g":"대구권"},{"n":"영덕","o":"서원일","g":"포항권"},{"n":"영주","o":"서원일","g":"북부권"},{"n":"왜관","o":"서원일","g":"대구권"},{"n":"진보","o":"서원일","g":"북부권"},{"n":"청도","o":"서원일","g":"대구권"},{"n":"칠곡강남","o":"서원일","g":"대구권"},{"n":"칠곡동","o":"서원일","g":"대구권"},{"n":"포항용흥","o":"서원일","g":"포항권"},{"n":"거창","o":"박준오","g":"경남권"},{"n":"내당","o":"박준오","g":"대구권"},{"n":"다성","o":"박준오","g":"대구권"},{"n":"대구북부","o":"박준오","g":"대구권"},{"n":"동촌","o":"박준오","g":"대구권"},{"n":"문경","o":"박준오","g":"북부권"},{"n":"반야월","o":"박준오","g":"대구권"},{"n":"서구미","o":"박준오","g":"경서권"},{"n":"성서","o":"박준오","g":"대구권"},{"n":"신암","o":"박준오","g":"대구권"},{"n":"예천","o":"박준오","g":"북부권"},{"n":"중부","o":"박준오","g":"대구권"},{"n":"포항흥해","o":"박준오","g":"포항권"},{"n":"하양","o":"박준오","g":"포항권"},{"n":"함양","o":"박준오","g":"경남권"},{"n":"합천","o":"박준오","g":"경남권"},{"n":"김천대신","o":"김석환","g":"경서권"},{"n":"김천부곡","o":"김석환","g":"경서권"},{"n":"달성","o":"김석환","g":"대구권"},{"n":"대구서부","o":"김석환","g":"대구권"},{"n":"동안동","o":"김석환","g":"북부권"},{"n":"북구미","o":"김석환","g":"경서권"},{"n":"신천","o":"김석환","g":"대구권"},{"n":"영천","o":"김석환","g":"포항권"},{"n":"울진","o":"김석환","g":"포항권"},{"n":"월배","o":"김석환","g":"대구권"},{"n":"의성","o":"김석환","g":"북부권"},{"n":"지산","o":"김석환","g":"대구권"},{"n":"평리","o":"김석환","g":"대구권"},{"n":"포항오천","o":"김석환","g":"포항권"},{"n":"포항중앙","o":"김석환","g":"포항권"}],"stores":[{"n":"대백마트 목련","d":"지산","a":"대구광역시 수성구 범안로3길 67"},{"n":"토마토마트 용산","d":"평리","a":"대구광역시 달서구 용산로 259"},{"n":"이노코식자재마트 세천","d":"다성","a":"대구광역시 달성군 다사읍 세천본길 46"},{"n":"대백마트 서재","d":"다성","a":"대구광역시 달성군 다사읍 서재로28길 19"},{"n":"홈마트 평리점","d":"평리","a":"대구광역시 서구 평리동 문화로 278"},{"n":"나이스마트 죽전","d":"평리","a":"대구광역시 달서구 죽전동 220-7"},{"n":"대백마트 대봉점","d":"중부","a":"대구광역시 중구 대봉1동 60-10"},{"n":"동해식자재","d":"포항용흥","a":"경상북도 포항시 남구 중앙로 153"},{"n":"청통G마트","d":"영천","a":"경상북도 영천시 청통면 금송로 1021"},{"n":"신우유통 야사","d":"영천","a":"경상북도 영천시 야사동 151-1"},{"n":"스카이시티","d":"거창","a":"경상남도 거창군 거창읍 김천리255-12"},{"n":"대백마트","d":"거창","a":"경상남도 거창군 거창읍 상림리 825-1"},{"n":"가조할인마트","d":"거창","a":"경상남도 거창군 가조면 수월리 454-8"},{"n":"맥스토아","d":"거창","a":"경상남도 거창군 거창읍 대동리 126-4"},{"n":"아림마트","d":"거창","a":"경상남도 거창군 거창읍 대동리 701"},{"n":"빅세일마트","d":"거창","a":"경상남도 거창군 거창읍 가지리 398-3"},{"n":"홈마트 옥산점","d":"경산","a":"경상북도 경산시 사정동 131-2"},{"n":"곰식자재마트","d":"경산","a":"경상북도 경산시 진량읍 대학로 1413"},{"n":"대백마트 옥산점","d":"경산","a":"경상북도 경산시 옥산동 848-3"},{"n":"대백마트 옥곡점","d":"경산","a":"경상북도 경산시 옥곡동 825-4"},{"n":"홈마트 새경산점","d":"경산","a":"경상북도 경산시 사동 574"},{"n":"뉴드림마트 경산점","d":"경산","a":"경상북도 경산시 정평동 264-104"},{"n":"우리식자재마트","d":"경산","a":"경상북도 경산시 정평동 255-137"},{"n":"신우식자재","d":"경산","a":"경상북도 경산시 진량읍 공단6로 147"},{"n":"세종마트","d":"경산","a":"경상북도 경산시 경산로54길 31"},{"n":"장보고식자재","d":"경산","a":"경상북도 경산시 중방동 874-3"},{"n":"그린할인마트","d":"경산","a":"경상북도 경산시 압량면 부적리 277-2"},{"n":"대백마트 사동점","d":"경산","a":"경상북도 경산시 사동 598"},{"n":"대백마트 온천점","d":"경산","a":"경상북도 경산시 성암로21길 39"},{"n":"홈마트 태왕점","d":"경산","a":"경상북도 경산시 삼풍로 13-4"},{"n":"OK포인트 씨마트","d":"경산","a":"경상북도 경산시 백천동 572-4"},{"n":"OK포인트 사동점","d":"경산","a":"경상북도 경산시 사동 665-5"},{"n":"매직할인마트","d":"경산","a":"경상북도 경산시 자인면 자인로 183"},{"n":"DC식자재마트 아포점","d":"김천대신","a":"경상북도 김천시 아포읍 한지2길64-3"},{"n":"파워마트","d":"김천부곡","a":"경상북도 김천시 부곡동 287-2"},{"n":"원웰빙마트","d":"김천부곡","a":"경상북도 김천시 용두동 87"},{"n":"DC식자재마트","d":"김천부곡","a":"경상북도 김천시 부곡동 1061"},{"n":"밀레니엄마트","d":"김천부곡","a":"경상북도 김천시 황금동 103-10"},{"n":"필마트 상모","d":"북구미","a":"경상북도 구미시 상사동로8길 4"},{"n":"대백 관호","d":"북구미","a":"경상북도 구미시 약목면 관호8길14"},{"n":"SS 마트","d":"북구미","a":"경상북도 구미시 신평동100-4"},{"n":"빅마트 상모","d":"북구미","a":"경상북도 구미시 상모동68-5"},{"n":"대백마트 중리점","d":"내당","a":"대구광역시 서구 중리동 62-17"},{"n":"세종마트","d":"내당","a":"대구광역시 서구 비산4동 287-1"},{"n":"달구벌식자재마트","d":"내당","a":"대구광역시 서구 서대구로 55"},{"n":"필마트 서남시장점","d":"내당","a":"대구광역시 달서구 감삼동 33-5 (대경마트 옆)"},{"n":"대백마트 내당","d":"내당","a":"대구광역시 서구 내당1동 230-6"},{"n":"대백마트 중평점","d":"내당","a":"대구광역시 서구 평리로57길 25"},{"n":"대백마트 평리","d":"내당","a":"대구광역시 서구 평리4동 1186-6"},{"n":"대백마트 서재점","d":"다성","a":"대구광역시 달성군 다사읍 서재로28길 19"},{"n":"삼부쇼핑 성주점","d":"다성","a":"경상북도 성주군 성주읍 시장길 40"},{"n":"서재마트","d":"다성","a":"대구광역시 달성군 다사읍 서재로 56"},{"n":"이코노식자재마트 세천","d":"다성","a":"대구광역시 달성군 다사읍 세천본길 46"},{"n":"탑마트 현풍점","d":"달성","a":"대구광역시 달성군 현풍읍 현풍로10길 74"},{"n":"달성유통(신규)","d":"달성","a":"대구광역시 달성군 유가읍 테크노공원로 91"},{"n":"구지드림","d":"달성","a":"대구광역시 달성군 구지면 응암리 1187"},{"n":"나이스마트(논공점)","d":"달성","a":"대구광역시 달성군 논공읍 북리 833-74"},{"n":"곰식자재마트","d":"달성","a":"대구광역시 달성군 논공읍 비슬로 1879"},{"n":"홈푸드마트 구지(신규)","d":"달성","a":"대구광역시 달성군 구지면 창리로 115"},{"n":"대백마트 신옥포점","d":"달성","a":"대구광역시 달성군 옥포면 돌미로2서길 3-4"},{"n":"OK마트 달성","d":"달성","a":"대구광역시 달성군 화원읍 화원로1길 45-6"},{"n":"나이스식자재(침산)","d":"대구북부","a":"대구광역시 북구 침산남로 122-6"},{"n":"유마트","d":"대구북부","a":"대구광역시 북구 침산로32길 8"},{"n":"대백마트 팔달","d":"대구북부","a":"대구광역시 북구 팔달로33길 13"},{"n":"ok마트(노원)","d":"대구북부","a":"대구광역시 북구 노원동 3가 1022"},{"n":"드림마트 노원","d":"대구북부","a":"대구광역시 북구 오봉로6길 12"},{"n":"대백마트","d":"대구서부","a":"대구광역시 서구평리동 606-4"},{"n":"파워마트","d":"대구서부","a":"대구광역시 서구 비산동12648-2"},{"n":"대백마트 대신","d":"대구서부","a":"대구광역시 서구 비산3동329-2"},{"n":"오케이포인트마트 대신점","d":"대구서부","a":"대구광역시 중구 달구벌대로389길 56"},{"n":"마트프라임[대평리]","d":"대구서부","a":"대구광역시 서구 평리4동 1408-3"},{"n":"금성식자재","d":"대구서부","a":"대구광역시 서구 팔달로 194"},{"n":"나이스마트(만평007)","d":"대구서부","a":"대구광역시 서구비산동1267-12"},{"n":"대백마트 북부점","d":"대구서부","a":"대구광역시 서구 비산동 533-2"},{"n":"경상유통","d":"대구서부","a":"대구광역시 서구 북부정류장 뒤쪽"},{"n":"나이스마트 대신","d":"대구서부","a":"대구광역시 서구 달성공원로2"},{"n":"오케이마트 비산","d":"대구서부","a":"대구광역시 서구 북비산로 360"},{"n":"파워마트(대명점)","d":"대명","a":"대구광역시 남구 대명3동 1896-13"},{"n":"복만네식자재장터","d":"대명","a":"대구광역시 남구 대명동 623-1"},{"n":"파워마트(남부점)","d":"대명","a":"대구광역시 남구 대명1동 1676-5"},{"n":"프라임 할인마트","d":"대명","a":"대구광역시 남구 대명 2동 1713-12"},{"n":"필마트 대명점","d":"대명","a":"대구광역시 남구 명덕로 174"},{"n":"대백마트 대명시장점","d":"대명","a":"대구광역시 남구 대명동 2276-14"},{"n":"참마트","d":"대명","a":"대구광역시 남구 대명동 2569-2"},{"n":"홈마트용상점","d":"동안동","a":"경상북도 안동시 용상동 1434"},{"n":"신시장마트","d":"동안동","a":"경상북도 안동시 옥야동 292-6"},{"n":"한솔마트","d":"동안동","a":"경상북도 안동시 용상동 1110-1"},{"n":"대백마트 용상점","d":"동안동","a":"경상북도 안동시 용상동 600-12"},{"n":"대백마트 신안동","d":"동안동","a":"경상북도 안동시 신안동 38-17"},{"n":"홈마트 안막점","d":"동안동","a":"경상북도 안동시 안막동 64-55"},{"n":"드림식자재마트(레몬마트)","d":"동촌","a":"대구광역시 동구 파계로19길 22"},{"n":"우리마트","d":"동촌","a":"대구광역시 동구 지묘동 245"},{"n":"필식자재마트 불로점","d":"동촌","a":"대구광역시 동구 해동로 260"},{"n":"대백마트 지묘","d":"동촌","a":"대구광역시 동구 파계로6길 43"},{"n":"대백식자재 공항점","d":"동촌","a":"대구광역시 동구 지저동 786-10"},{"n":"참마트","d":"동촌","a":"대구광역시 북구 검단동 1066-7"},{"n":"대경마트 불로점","d":"동촌","a":"대구광역시 동구 불로동 1073-7"},{"n":"대백마트 산격점","d":"동촌","a":"대구광역시 북구 산격로6길 7"},{"n":"대백마트 동구점","d":"동촌","a":"대구광역시 동구 방촌로1길 117"},{"n":"대백마트 불로점","d":"동촌","a":"대구광역시 동구 불로동 455 (불로시장 내 위치)"},{"n":"나이스마트 이시아점","d":"동촌","a":"대구광역시 동구 팔공로51길 39"},{"n":"오케이마트 방촌","d":"동촌","a":"대구광역시 동구 화랑로 414"},{"n":"k마트","d":"동촌","a":"대구광역시 북구 산격3동 1264-10"},{"n":"올마트","d":"문경","a":"경상북도 문경시 점촌동 450-1"},{"n":"하나로마트 문경","d":"문경","a":"경상북도 문경시 문경읍 하리 212-14"},{"n":"1004마트","d":"문경","a":"경상북도 문경시 문경읍 하리 76-8"},{"n":"경천할인마트","d":"문경","a":"경상북도 문경시 모전동717"},{"n":"모전OK마트","d":"문경","a":"경상북도 문경시 당교3길 77"},{"n":"하나디씨마트","d":"문경","a":"경상북도 문경시 매봉1길 49-10"},{"n":"하나로코사마트","d":"문경","a":"경상북도 문경시 문경읍 문희로 25"},{"n":"제이할인마트","d":"문경","a":"경상북도 문경시 가은읍 대야로 2461"},{"n":"송암 E 마트","d":"문경","a":"경상북도 문경시 농암면 은성로 13"},{"n":"행복한매식자재마트","d":"반야월","a":"대구광역시 동구 율하동 158-2"},{"n":"장보고식자재 반야월점","d":"반야월","a":"대구광역시 동구 경안로 732"},{"n":"대백마트 반야월시장","d":"반야월","a":"대구광역시 동구 신기동 270-1"},{"n":"탑마트","d":"반야월","a":"대구광역시 동구 신서동 805-12"},{"n":"홈마트 안심점","d":"반야월","a":"대구광역시 동구 동호로 162"},{"n":"다담아식자재","d":"반야월","a":"대구광역시 동구 율하동"},{"n":"마트프라임 동호","d":"반야월","a":"대구광역시 동구 안심로 372"},{"n":"송정할인","d":"반야월","a":"대구광역시 동구 신서동 831-1"},{"n":"필마트","d":"반야월","a":"대구광역시 동구 율하동 1475"},{"n":"엠마트","d":"반야월","a":"대구광역시 동구 율하동로24길 35"},{"n":"대백마트 혁신점","d":"반야월","a":"대구광역시 동구 경안로 808"},{"n":"대백마트 율하","d":"반야월","a":"대구광역시 동구 안심로22길 14"},{"n":"하담마트","d":"반야월","a":"대구광역시 동구 안심로22길 60-23"},{"n":"우리식자자재마트","d":"반야월","a":"대구광역시 동구 메디밸리로 5-26 우리빌딩"},{"n":"파워마트 각산","d":"반야월","a":"대구광역시 동구 반야월로 211-5"},{"n":"올리브쉐프","d":"봉덕","a":"대구광역시 달서구 송현1동 1931-15"},{"n":"풀그린식자재마트","d":"봉덕","a":"대구광역시 남구 봉덕동 1292-242"},{"n":"장보고상인","d":"봉덕","a":"대구광역시 달서구 월곡로 243"},{"n":"복만네식자재대덕점","d":"봉덕","a":"대구광역시 남구 대명남로 124 1층"},{"n":"싹쓸이식자재상인점","d":"봉덕","a":"대구광역시 달서구 송현로7길 37-1"},{"n":"홈마트상인(포인트마트 상인)","d":"봉덕","a":"대구광역시 달서구 상인1동 129-8"},{"n":"ok마트 봉덕","d":"봉덕","a":"대구광역시 남구 봉덕1동 472-2"},{"n":"파워마트(상인)","d":"봉덕","a":"대구광역시 달서구 월곡로47길 40"},{"n":"슬기로운마트생활 상인","d":"봉덕","a":"대구광역시 달서구 상화북로 160 1층 101호"},{"n":"인동장보고마트","d":"북구미","a":"경상북도 구미시 인동중앙로 53"},{"n":"지엠식자재(구 dc 지산)","d":"북구미","a":"경상북도 구미시 지산동 629번지"},{"n":"디씨마트각산","d":"북구미","a":"경상북도 구미시 남통동 14-10"},{"n":"플레쉬 마트","d":"북구미","a":"경상북도 구미시 봉곡로14길 27"},{"n":"G7마트","d":"북구미","a":"경상북도 구미시 야은로 296"},{"n":"대경복지유통(원평)","d":"북구미","a":"경상북도 구미시 원평동 117-10"},{"n":"마트로고(대박마트)","d":"북구미","a":"경상북도 구미시 인의동 285"},{"n":"ss마트 구평점","d":"북구미","a":"경상북도 구미시 인의동 996-6"},{"n":"007본점","d":"북구미","a":"경상북도 구미시 인의동 667-7"},{"n":"썬마트","d":"북구미","a":"경상북도 구미시 인동25길 6"},{"n":"리치1호","d":"상주","a":"경상북도 상주시 남성동 35-4"},{"n":"리치2호","d":"상주","a":"경상북도 상주시 냉림동 260"},{"n":"리치마트 무양점","d":"상주","a":"경상북도 상주시 무양동 146"},{"n":"퀸마트","d":"상주","a":"경상북도 상주시 함창읍 구향리 112-1"},{"n":"DC마트","d":"상주","a":"경상북도 상주시 냉림동 354-9"},{"n":"상주식자재마트","d":"상주","a":"경상북도 상주시 복룡1길 30-14"},{"n":"그린홈마트","d":"상주","a":"경상북도 상주시 함창읍 구향리 85-1"},{"n":"SS마트","d":"서구미","a":"경상북도 구미시 송정동 497-1"},{"n":"우리홈마트","d":"서구미","a":"경상북도 구미시 형곡동 368"},{"n":"참마트 송정점","d":"서구미","a":"경상북도 구미시 송정동 8-5"},{"n":"DC마트 송정","d":"서구미","a":"경상북도 구미시 송정동 39-1"},{"n":"DC마트형곡","d":"서구미","a":"경상북도 구미시 형곡동 162-6"},{"n":"스마일식자재센타","d":"서안동","a":"경상북도 안동시 옥서1길 51"},{"n":"대백마트 송현점","d":"서안동","a":"경상북도 안동시 송현동 516"},{"n":"홈마트 운안점","d":"서안동","a":"경상북도 안동시 단원로 95-1"},{"n":"나이스마트","d":"서안동","a":"경상북도 안동시 경상북도대로 470"},{"n":"필식자재","d":"성당","a":"대구광역시 달서구 야외음악당로 28"},{"n":"우리 식자재 마트","d":"성당","a":"대구광역시 달서구 본리동 371-1"},{"n":"삼정 대백마트","d":"성당","a":"대구광역시 달서구 두류3동 490-15"},{"n":"현대 마트","d":"성당","a":"대구광역시 남구 두류공원로 86"},{"n":"대백마트 본리점","d":"성당","a":"대구광역시 달서구 본리동 209-1"},{"n":"홀마트","d":"성당","a":"대구광역시 달서구 성당로 167"},{"n":"장보고 식자재","d":"성서","a":"대구광역시 달서구 신당동 682-1"},{"n":"필 식자재마트","d":"성서","a":"대구광역시 달서구 달구벌대로 1358"},{"n":"대백마트 이곡","d":"성서","a":"대구광역시 달서구 이곡동 1248-6"},{"n":"나이스 마트","d":"성서","a":"대구광역시 달서구 계대동문로 102"},{"n":"슬기로운마트생활","d":"성서","a":"대구광역시 달서구 호산동 357-118"},{"n":"케이마트이곡","d":"성서","a":"대구광역시 달서구 이곡서로 46"},{"n":"한솔마트 삼성점","d":"성서","a":"대구광역시 달서구 파호동 89번지"},{"n":"퍼펙트마트 월성","d":"송현","a":"대구광역시 달서구 월성로 42"},{"n":"장보고식자재 감삼점","d":"송현","a":"대구광역시 달서구 감삼동 472-2"},{"n":"효성파머스마켓","d":"송현","a":"대구광역시 달서구 송현2동 1922-22"},{"n":"뉴동아마트","d":"송현","a":"대구광역시 달서구 월성동 86"},{"n":"대백마트 송현점","d":"송현","a":"대구광역시 달서구 송현동 570"},{"n":"더홈마트","d":"송현","a":"대구광역시 달서구 용산로 26"},{"n":"Ok포인트마트 월촌","d":"송현","a":"대구광역시 달서구 송현로 76"},{"n":"대구광역시식자재마트","d":"시지","a":"대구광역시 수성구신매동 579"},{"n":"대백마트 신매점","d":"시지","a":"대구광역시 수성구신매동 217"},{"n":"홈마트","d":"시지","a":"대구광역시 수성구 욱수동 226-4번지"},{"n":"푸트마켓","d":"시지","a":"대구광역시 수성구신매동 569"},{"n":"마트프라임(시지)","d":"시지","a":"대구광역시 수성구 시지동 35-7"},{"n":"신우유통 고산점","d":"시지","a":"대구광역시 수성구 시지동 498"},{"n":"대백마트(욱수)","d":"시지","a":"대구광역시 수성구 욱수동 232-1"},{"n":"대백마트(사월)","d":"시지","a":"대구광역시 수성구 사월동 550-6"},{"n":"나이스마트 신매","d":"시지","a":"대구광역시 수성구 신매동 581"},{"n":"마트프라임 효목","d":"시지","a":"대구광역시 동구 아양로50길 110"},{"n":"나누리마트","d":"시지","a":"대구광역시 동구 아양로50길 24"},{"n":"마트프라임 동대구광역시","d":"시지","a":"대구광역시 동구 동부로30길 43"},{"n":"마트프라임 만촌","d":"시지","a":"대구광역시 수성구 국채보상로 1068"},{"n":"내고장마트","d":"신암","a":"대구광역시 동구 신암5동 104-3"},{"n":"나이스마트","d":"신암","a":"대구광역시 수성구 범어2동 221-21"},{"n":"데레사마트","d":"신암","a":"대구광역시 동구 복현동 78-8"},{"n":"대백마트 영진","d":"신암","a":"대구광역시 북구 복현2동 249-1"},{"n":"대백마트 목현","d":"신암","a":"대구광역시 동구 신암1동 766"},{"n":"대백마트 신암","d":"신암","a":"대구광역시 동구 신암2동 1286-6"},{"n":"나이스마트 신암점","d":"신암","a":"대구광역시 동구 아양로39길 32"},{"n":"대백마트 동대구광역시","d":"신천","a":"대구광역시 동구 신암2동 1286-6"},{"n":"퀵쿡마트","d":"신천","a":"대구광역시 수성구 수성동1가"},{"n":"포인트마트 신천","d":"신천","a":"대구광역시 동구 신천동556-1 신천주공아파트 상가 101-101호"},{"n":"대백마트(범어)","d":"신천","a":"대구광역시 수성구 범어동 775-71"},{"n":"나이스마트 중동점","d":"신천","a":"대구광역시 수성구 희망로19길 58"},{"n":"장보고식자재 황금","d":"신천","a":"대구광역시 수성구 동대구광역시로29길 11"},{"n":"프라임마트 동구","d":"신천","a":"대구광역시 동구 신천3동 283-2"},{"n":"드림마트","d":"신천","a":"대구광역시 북구 대현2동 272-19"},{"n":"황금식자재마트","d":"신천","a":"대구광역시 수성구 황금2동 746"},{"n":"프라임 송라점","d":"신천","a":"대구광역시 동구 신천동 541-11"},{"n":"대백마트 대현","d":"신천","a":"대구광역시 북구 대현2동 407-10"},{"n":"ok포인트 상동","d":"신천","a":"대구광역시 수성구 상화로5길 14"},{"n":"K마트 중동","d":"신천","a":"대구광역시 수성구 범어4동 332"},{"n":"슬기로운마트생활","d":"신천","a":"대구광역시 수성구 달구벌대로 2506"},{"n":"OK마트 수성","d":"신천","a":"대구광역시 수성구 중동 345-12"},{"n":"영덕식자재마트","d":"영덕","a":"경상북도 영덕군 영덕읍 읍사무소1길 51"},{"n":"하모니마트","d":"영덕","a":"경상북도 영덕군 영해면 벌영리 13-2"},{"n":"홈마트","d":"영덕","a":"경상북도 영덕군 영해면 성내리 428-4"},{"n":"강구식자재마트","d":"영덕","a":"경상북도 영덕군 강구면 동해대로 4446"},{"n":"영해할인마트","d":"영덕","a":"경상북도 영덕군 영해면 성내리472-22"},{"n":"온정마트","d":"영덕","a":"경상북도 영덕군 영덕읍 남석리 157-3"},{"n":"축산에이스마트","d":"영덕","a":"경상북도 영덕군 축산면 축산리 112-3"},{"n":"에이스마트","d":"영덕","a":"경상북도 영덕군 영덕읍 덕곡리 223-17"},{"n":"영주할인마트","d":"영주","a":"경상북도 영주시 구성로 376"},{"n":"홈마트(신영주점)","d":"영주","a":"경상북도 영주시 휴천2동 316-14"},{"n":"리더스(본점)","d":"영주","a":"경상북도 영주시 영주2동 513-3"},{"n":"홈마트(서천점)","d":"영주","a":"경상북도 영주시 가흥동 479-4"},{"n":"리더스(가흥)","d":"영주","a":"경상북도 영주시 가흥2동 522-4"},{"n":"풀마트 봉화","d":"영주","a":"경상북도 봉화군 봉화읍 내성리 426-12"},{"n":"풀마트 춘양점","d":"영주","a":"경상북도 봉화군 춘양면 의양리 450-3"},{"n":"텐마트","d":"영주","a":"경상북도 봉화군 봉화읍 내성리 152-2"},{"n":"안정로컬푸드","d":"영주","a":"경상북도 영주시 대학로284번길 5"},{"n":"리더스(봉화)","d":"영주","a":"경상북도 봉화군 봉화읍 봉화로 1161-8"},{"n":"주부쇼핑센터","d":"영주","a":"경상북도 영주시 중앙로95번길 37 주부슈퍼마켓"},{"n":"리더스(상망)","d":"영주","a":"경상북도 영주시 원당로225번길 76"},{"n":"건천식자재","d":"영천","a":"경상북도 경주시 건천읍 대곡용명길 7"},{"n":"탑마트 영천","d":"영천","a":"경상북도 영천시 야사동 106-6"},{"n":"펄마트","d":"영천","a":"경상북도 영천시 화남면 삼창리242"},{"n":"트라이얼마트","d":"영천","a":"경상북도 영천시 조교동 832-1"},{"n":"곰식자재마트","d":"영천","a":"경상북도 영천시 호국로 127"},{"n":"스타식자재마트","d":"영천","a":"경상북도 영천시 동부로 31"},{"n":"대경유통","d":"영천","a":"경상북도 영천시 문내동 38-6"},{"n":"청통 G마트","d":"영천","a":"경상북도 영천시 청통면 치일리 36-2"},{"n":"건천 드림마트","d":"영천","a":"경상북도 경주시 건천읍 건천리 280"},{"n":"별빛마트","d":"영천","a":"경상북도 영천시 임고면 양항리 320-1"},{"n":"대구유통","d":"영천","a":"경상북도 영천시 북안면 고지리 545-5"},{"n":"백두쇼핑","d":"예천","a":"경상북도 예천군 예천읍 충효로 280"},{"n":"대백마트 예천점","d":"예천","a":"경상북도 예천군 예천읍 대심리 62-1"},{"n":"리더스 예천점","d":"예천","a":"경상북도 예천군 예천읍 동본리 495-1"},{"n":"예천식자재마트","d":"예천","a":"경상북도 예천군 예천읍 백전리 117"},{"n":"007마트","d":"왜관","a":"경상북도 칠곡군 석적읍 중리83-78"},{"n":"SS마트 석적","d":"왜관","a":"경상북도 칠곡군 석적읍 중리 192-4"},{"n":"석적하나로마트","d":"왜관","a":"경상북도 칠곡군 석적읍 강변대로 2290"},{"n":"석적식자재마트","d":"왜관","a":"경상북도 칠곡군 석적읍 중리 108-1"},{"n":"DC마트","d":"왜관","a":"경상북도 칠곡군 석적읍 석적로 933-3"},{"n":"왜관식자재","d":"왜관","a":"경상북도 칠곡군 왜관읍 석전로 31"},{"n":"원마트","d":"왜관","a":"경상북도 칠곡군 석적읍 중리648-1"},{"n":"후포1등식자재마트","d":"울진","a":"경상북도 울진군 후포면 후포삼율로 82-3"},{"n":"후포홈마트","d":"울진","a":"경상북도 울진군 후포면 삼율리 287-1"},{"n":"바다할인마트","d":"울진","a":"경상북도 울진군 죽변면 죽변리 32-42"},{"n":"홈마트 대곡점","d":"월배","a":"대구광역시 달서구 대곡동 616번지"},{"n":"대구유통(월배)","d":"월배","a":"대구광역시 달서구 도원동 1436-2"},{"n":"필마트","d":"월배","a":"대구광역시 달서구 진천동 248-4"},{"n":"장보고식자재 진천점","d":"월배","a":"대구광역시 달서구 진천동 253-3"},{"n":"대백마트 대곡역점","d":"월배","a":"대구광역시 달서구 대곡동 56-2"},{"n":"홈마트 대천점","d":"월배","a":"대구광역시 달서구 대천동 472-2"},{"n":"나이스마트","d":"월배","a":"대구광역시 달서구 대천동 937"},{"n":"장보고식자재 월배점","d":"월배","a":"대구광역시 달서구 월성동 1380"},{"n":"필마트 도원점","d":"월배","a":"대구광역시 달서구 도원동 1429-2"},{"n":"후레쉬마트","d":"의성","a":"경상북도 의성군 의성읍 후죽리 836-1"},{"n":"파워마트 군위점","d":"의성","a":"대구광역시 군위군 군위읍 군청로 75"},{"n":"장군식자재","d":"의성","a":"경상북도 의성군 의성읍 동서1길 99"},{"n":"파워식자재","d":"의성","a":"대구광역시 군위군 군위읍 동부리 667-1"},{"n":"안계 퀸","d":"의성","a":"경상북도 의성군 안계면 용기리 1116-3"},{"n":"탑마트 대구광역시점","d":"중부","a":"대구광역시 중구 중앙대로66길 20"},{"n":"대경마트","d":"중부","a":"대구광역시 남구 대명2동 2014-204"},{"n":"마트프라임 경대","d":"중부","a":"대구광역시 중구 동인동1가 71"},{"n":"윌마트","d":"중부","a":"대구광역시 남구 이천동 550-1"},{"n":"나이스마트","d":"지산","a":"대구광역시 수성구 파동 203-1"},{"n":"데레사농수축마트","d":"지산","a":"대구광역시 수성구 지산1동 359-3"},{"n":"대백마트 범물점","d":"지산","a":"대구광역시 수성구 범물1동 1287"},{"n":"대백마트 가창점","d":"지산","a":"대구광역시 달성군 가창면 가창로 1127"},{"n":"범물파머스","d":"지산","a":"대구광역시 수성구 범물2동 838"},{"n":"홈마트(영양)","d":"진보","a":"경상북도 영양군 영양읍 서부리 251-4"},{"n":"퀸마트(진보)","d":"진보","a":"경상북도 청송군 진보면 진안리 469-4"},{"n":"진보식자재마트","d":"진보","a":"경상북도 청송군 진보면 경동로 4193"},{"n":"영양새천년","d":"진보","a":"경상북도 영양군 영양읍 서부리 106-6"},{"n":"풀마트(청송)","d":"진보","a":"경상북도 청송군 청송읍 월막리 426-2"},{"n":"OK마트 영양","d":"진보","a":"경상북도 영양군 영양읍 군민회관길 26"},{"n":"빅플러스청송","d":"진보","a":"경상북도 청송군 청송읍 금월로 266"},{"n":"탑마트청도점","d":"청도","a":"경상북도 청도군 청도읍고수1리 802"},{"n":"동곡탑플러스","d":"청도","a":"경상북도 청도군 금천면 금천로 71"},{"n":"동곡식자재","d":"청도","a":"경상북도 청도군 금천면 금천로 63"},{"n":"콜마트","d":"청도","a":"경상북도 청도군 풍각면송서리 567-4"},{"n":"대백마트청도점","d":"청도","a":"경상북도 청도군 청도읍고수1리 517-1"},{"n":"세종마트","d":"청도","a":"경상북도 청도군 화양읍 청화로 23"},{"n":"풍각식자재","d":"청도","a":"경상북도 청도군 풍각면 송서리 497-1 489"},{"n":"세종마트","d":"칠곡강남","a":"대구광역시 북구 태전동 155-2"},{"n":"장보고식자재","d":"칠곡강남","a":"대구광역시 북구 태전동 228"},{"n":"대백마트 태전점","d":"칠곡강남","a":"대구광역시 북구 태전동 204-2"},{"n":"대백마트 매천점","d":"칠곡강남","a":"대구광역시 북구 매천동 690"},{"n":"필식자재","d":"칠곡강남","a":"대구광역시 북구 구암로 17"},{"n":"대백마트 금호 사수점","d":"칠곡강남","a":"대구광역시 북구 사수동 966"},{"n":"OK 센스마트","d":"칠곡강남","a":"대구광역시 북구 내곡로 38-6"},{"n":"퍼펙트마트","d":"칠곡강남","a":"대구광역시 북구 관음중앙로 43"},{"n":"빅마트","d":"칠곡동","a":"대구광역시 북구 구암동 771-4"},{"n":"서변OK마트","d":"칠곡동","a":"대구광역시 북구 서변동 1787-9"},{"n":"동변대백마트","d":"칠곡동","a":"대구광역시 북구 서변동 1751-6"},{"n":"동천OK마트","d":"칠곡동","a":"대구광역시 북구 동천동 940"},{"n":"대백마트 동천","d":"칠곡동","a":"대구광역시 북구 팔거천동로24길 40"},{"n":"OK포인트연경","d":"칠곡동","a":"대구광역시 북구 연경지묘로 7"},{"n":"대백마트 구암점","d":"칠곡동","a":"대구광역시 북구 구암로 170"},{"n":"드림마트","d":"칠곡동","a":"대구광역시 북구 태전동 615"},{"n":"이코노마트","d":"칠곡동","a":"대구광역시 북구 매전로 72-3"},{"n":"나이스마트","d":"칠곡동","a":"대구광역시 북구 서변동 899-1"},{"n":"효성파머스마켓","d":"칠곡동","a":"대구광역시 북구 구암동 781"},{"n":"나이스마트","d":"칠곡동","a":"대구광역시 북구 서변동 899-1"},{"n":"서대구광역시농축산물","d":"평리","a":"대구광역시 서구 이현동 42-672"},{"n":"나이스마트","d":"평리","a":"대구광역시 달서구 용산1동 930-1"},{"n":"장보고 중리점","d":"평리","a":"대구광역시 광역시 서구 중리동 9-15"},{"n":"구룡포 참마트","d":"포항오천","a":"경상북도 포항시 남구 구룡포읍 구룡포리 962-1"},{"n":"대송하나마트","d":"포항오천","a":"경상북도 포항시 남구 대송면 제내리 335-19"},{"n":"탑마트 문덕점","d":"포항오천","a":"경상북도 포항시 남구 오천읍 원리302"},{"n":"장보고식자재 포항점","d":"포항오천","a":"경상북도 포항시 남구 오천읍 남원로 86-54"},{"n":"왕도매식자재마트","d":"포항오천","a":"경상북도 포항시 남구 오천읍 용덕리 394-1"},{"n":"문덕빅마트","d":"포항오천","a":"경상북도 포항시 남구 오천읍 문덕리 316-6"},{"n":"메가식자재마트","d":"포항오천","a":"경상북도 포항시 남구 오천읍 하원로47번길 9"},{"n":"오천 빅마트","d":"포항오천","a":"경상북도 포항시 남구 오천읍 구정리 43-1"},{"n":"R마트 연일","d":"포항오천","a":"경상북도 포항시 남구 연일읍 동문로21번길 7"},{"n":"빅마트 약전점","d":"포항오천","a":"경상북도 포항시 남구 동해면 406-4"},{"n":"영마트","d":"포항오천","a":"경상북도 포항시 남구 구룡포읍 구룡포길 101"},{"n":"탑마트 죽도점","d":"포항용흥","a":"경상북도 포항시 북구 죽도동 20-114"},{"n":"해도농수산물센터","d":"포항용흥","a":"경상북도 포항시 남구 포스코대로 413"},{"n":"R마트 효자점","d":"포항용흥","a":"경상북도 포항시 남구 효자동 253-119"},{"n":"효자 콜마트","d":"포항용흥","a":"경상북도 포항시 남구 효자동 66-28"},{"n":"탑마트 유강점","d":"포항용흥","a":"경상북도 포항 남구 연일읍 유강리 584-5"},{"n":"참마트","d":"포항용흥","a":"경상북도 포항시 북구 죽도동 209-11"},{"n":"리더스마트 송도점","d":"포항용흥","a":"경상북도 포항시 남구 송도동 391-2"},{"n":"월드마트","d":"포항용흥","a":"경상북도 포항시 북구 학잠동 56-2"},{"n":"탑마트 우현점","d":"포항중앙","a":"경상북도 포항 북구 우현동 115-2"},{"n":"리플러스 양덕","d":"포항중앙","a":"경상북도 포항시 북구 장성동 1388-17"},{"n":"리플러스 본점","d":"포항중앙","a":"경상북도 포항 북구 두호동 1024-2"},{"n":"해도농수산물센터","d":"포항중앙","a":"경상북도 포항시 북구 창포동 산95-1"},{"n":"리플러스 장성점","d":"포항중앙","a":"경상북도 포항시 북구 두호동 1024-2"},{"n":"리플러스 성곡점","d":"포항중앙","a":"경상북도 포항시 북구 흥해읍 소티재로 372"},{"n":"리플러스 침촌점","d":"포항중앙","a":"경상북도 포항시 북구 장성동 1528-8"},{"n":"탑플러스마트","d":"포항중앙","a":"경상북도 포항시 북구 새천년대로 1026"},{"n":"리더스마트 항구점","d":"포항중앙","a":"경상북도 포항시 북구 학전로 50"},{"n":"팜스마트","d":"포항중앙","a":"경상북도 포항시 북구 우창동로 30"},{"n":"우리홈마트","d":"포항흥해","a":"경상북도 포항시 북구 흥해읍 남성리 251"},{"n":"R식자재마트 초곡","d":"포항흥해","a":"경상북도 포항시 북구 흥해읍 초곡리 1367"},{"n":"보경할인마트","d":"포항흥해","a":"경상북도 포항시 북구 청하면 미남리 453-7"},{"n":"세종식자재마트","d":"포항흥해","a":"경상북도 포항시 북구 흥해읍 동해대로 1554"},{"n":"흥해식자재마트","d":"포항흥해","a":"경상북도 포항시 북구 흥해읍 마산리 130-1"},{"n":"굿마트 흥해","d":"포항흥해","a":"경상북도 포항시 북구 흥해읍 남성리 326-4"},{"n":"그린스토아","d":"포항흥해","a":"경상북도 포항시 북구 흥해읍 마산리 63"},{"n":"금호콜마트","d":"하양","a":"경상북도 영천시 금호읍 교대리 216-4"},{"n":"칠성할인마트","d":"하양","a":"경상북도 영천시 신녕면 화성리 961-1"},{"n":"대백마트 신녕","d":"하양","a":"경상북도 영천시 신녕면 장수로 1625"},{"n":"드림식자재마트","d":"하양","a":"경상북도 경산시 하양읍 금락리 390-6"},{"n":"OK마트","d":"하양","a":"경상북도 경산시 하양읍 대경로 159길 47"},{"n":"나이스마트 하양","d":"하양","a":"경상북도 경산시 하양읍 동서리 635"},{"n":"OK포인트마트","d":"하양","a":"경상북도 경산시 하양읍금락리116-269"},{"n":"킹스할인","d":"함양","a":"경상남도 함양군 함양읍 용평리 625"},{"n":"키모마트","d":"함양","a":"경상남도 함양군.읍.함양로1176"},{"n":"함양식자재마트","d":"함양","a":"경상남도 함양읍 교산리 135-1"},{"n":"큐마트","d":"함양","a":"경상남도 함양군 함양읍 고운로 35  함양군청 뒤"},{"n":"js마트","d":"합천","a":"경상북도 고령군 고령읍 쾌변리 470"},{"n":"대백마트 고령","d":"합천","a":"경상북도 고령군 대가야읍 우륵로 16-1"},{"n":"고령홈마트","d":"합천","a":"경상북도 고령군 고령읍 헌문리 49-4"},{"n":"ok포인트고령점","d":"합천","a":"경상북도 고령군 대가야읍 헌문리 327-1"},{"n":"합천마트","d":"합천","a":"경상남도 합천군 합천읍 합천리 413-3"},{"n":"다산드림마트","d":"합천","a":"경상북도 고령군 다산면 상곡리 161-17"},{"n":"삼가만물식자재마트","d":"합천","a":"경상남도 합천군 삼가면 삼가로 358"},{"n":"킹할인마트 합천","d":"합천","a":"경상남도 합천군 합천읍 문화로 25-1"},{"n":"합천홈","d":"합천","a":"경상남도 합천군 합천읍 합천리 908"}],"products":[{"n":"담백한A(병)190(38mm)-10G","q":10,"u":671.0,"c":13000},{"n":"달콤한B(병)190(38mm)-10G","q":10,"u":671.0,"c":13000},{"n":"검은콩(병)190(38mm)-10G","q":10,"u":709.5,"c":14000},{"n":"검은콩깨(파)190-15G","q":15,"u":555.5,"c":16500},{"n":"검은콩16곡(파)190-15G","q":15,"u":528.0,"c":16500},{"n":"검은콩아몬드와호두(파)190-15G","q":15,"u":577.5,"c":16500},{"n":"검은콩두유고칼슘(파)190-15G","q":15,"u":528.0,"c":16500},{"n":"고소한베지밀(파)190-15G","q":15,"u":511.5,"c":16500},{"n":"검은콩두유고칼슘(미드)190-24","q":24,"u":533.5,"c":25200},{"n":"검은콩두유고칼슘(미드)190-64G","q":16,"u":533.5,"c":16800},{"n":"검은참깨(미드)190-24G","q":24,"u":533.5,"c":25200},{"n":"담백한A(미드)190-24","q":24,"u":478.5,"c":22800},{"n":"담백한A(미드)190-64G","q":16,"u":478.5,"c":15200},{"n":"달콤한B(미드)190-24","q":24,"u":478.5,"c":22800},{"n":"달콤한B(미드)190-64G","q":16,"u":478.5,"c":15200},{"n":"검은콩&검은참깨(미드)190-24","q":24,"u":533.5,"c":25200},{"n":"검은콩&검은참깨(미드)190-64G","q":16,"u":533.5,"c":16800},{"n":"아몬드와호두(미드)190-24G","q":24,"u":550.0,"c":26000},{"n":"한끼두유(미드)190-64G","q":16,"u":572.0,"c":18000},{"n":"검은콩&16곡(미드)190-24","q":24,"u":533.5,"c":25200},{"n":"5060시니어두유(미드)190-24G","q":24,"u":572.0,"c":25200},{"n":"5060시니어두유(미드)190-64G","q":16,"u":572.0,"c":16800},{"n":"플레인고칼슘두유(미드)190-24G","q":24,"u":506.0,"c":24480},{"n":"검은콩아몬드&호두(미드)190-24","q":24,"u":561.0,"c":27600},{"n":"검은참깨고칼슘(미드)190-24G","q":24,"u":533.5,"c":25200},{"n":"에이스저당두유(미드)190-64G","q":16,"u":566.5,"c":16800},{"n":"고단백두유검은콩(미드)190-24","q":24,"u":616.0,"c":27600},{"n":"고단백두유검은콩(미드)190-64G","q":16,"u":616.0,"c":18400},{"n":"고단백두유초코(미드)190-64G","q":16,"u":660.0,"c":18400},{"n":"고단백두유플레인(미드)190-24","q":24,"u":616.0,"c":27600},{"n":"검은콩저당두유(미드)190-24","q":24,"u":517.0,"c":25200},{"n":"데일리저당두유(미드)190-24(6B)","q":24,"u":561.0,"c":25200},{"n":"꼭꼭씹히는애플망고(콤비)190N-64","q":16,"u":731.5,"c":20800},{"n":"뼈에좋은검은콩(미드)190-24G","q":24,"u":533.5,"c":25200},{"n":"(리)꼭꼭씹히는애플망고(콤비)칼라190N-24(8단)","q":24,"u":715.0,"c":31200},{"n":"담백한A(Edge)950-12","q":1,"u":1628.0,"c":3200},{"n":"달콤한B(Edge)950-12","q":1,"u":1628.0,"c":3200},{"n":"검은콩고칼슘(Edge)950-12","q":1,"u":1914.0,"c":3800},{"n":"아몬드와호두(Edge)950-12","q":1,"u":1826.0,"c":3600},{"n":"고단백두유검은콩(Edge)950-12","q":1,"u":2035.0,"c":4000},{"n":"바나나땅콩버터쉐이크(페트)240-24(6B)","q":24,"u":990.0,"c":48000},{"n":"영양케어미니(콤비)150N-24","q":24,"u":1149.5,"c":38400},{"n":"프로틴밀ACTIVE아몬드＆호두(Edge)250N-18","q":18,"u":1518.0,"c":45000},{"n":"모과쌍화진(병)150(28mm)N-10","q":10,"u":638.0,"c":11000},{"n":"배도라지진(병)150(28mm)N-10","q":10,"u":638.0,"c":11000},{"n":"모과쌍화(파)150-15G","q":15,"u":775.5,"c":20000},{"n":"건강담은야채가득V19(콤비)칼라145N-24(12단)","q":24,"u":385.0,"c":19000},{"n":"진한콩국물검은콩(파)190-15G","q":15,"u":528.0,"c":16500},{"n":"진한콩국물(Edge)950-12","q":1,"u":1430.0,"c":2400},{"n":"진한콩국물검은콩(Edge)950-12","q":1,"u":1529.0,"c":2500},{"n":"시원한채소육수(Edge)950-12","q":1,"u":1490.5,"c":2500},{"n":"담백한채소육수(Edge)950-12","q":1,"u":1490.5,"c":2500},{"n":"특등급국산콩콩국물(Edge)950-12","q":1,"u":2805.0,"c":5000},{"n":"숙성동치미냉면육수(Edge)950N-12","q":1,"u":1650.0,"c":2500},{"n":"아임비타비타드링크(병)100(28mm)N-50","q":10,"u":462.0,"c":7500},{"n":"그린비아당케어미니(콤비)150N-24","q":24,"u":1342.0,"c":45600},{"n":"그린비아영양케어(Edge)200N-18","q":18,"u":1133.0,"c":36000},{"n":"그린비아당케어(Edge)200N-18","q":18,"u":1298.0,"c":43200}],"packs":[1,10,15,16,20,24]};
+// 기본 구글시트 연결 정보 — 처음 여는 기기는 자동으로 연결됩니다
+const DEFAULT_CFG = {
+  url: 'https://script.google.com/macros/s/AKfycbyv8nllspL23VYKQpmQtf2_cwH-L3YPVkE3czGK204p7jR5QXXZMXNL6d6ys4vaNZJm/exec',
+  token: '5593445'
+};
+
+/* ---------- 상태 ---------- */
+const S = {
+  master: null, dmap: new Map(), pmap: new Map(), smap: new Map(),
+  cfg: load('cfg', DEFAULT_CFG),
+  user: load('user', null),
+  recs: new Map(), loaded: new Set(),
+  view: 'dash',
+  per: { mode: 'm', from: ym(new Date()), to: ym(new Date()) },
+  f: { region: '', owner: '', dealer: '' },
+  lf: { status: '', verdict: '', flag: '', q: '' },
+  sort: {}, photo: new Map(), showAllDealers: false, sel: new Set()
+};
+
+/* ---------- 유틸 ---------- */
+function load(k, d) { try { const v = localStorage.getItem('pc_' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function save(k, v) { try { localStorage.setItem('pc_' + k, JSON.stringify(v)); } catch (e) { } }
+function ym(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+function today() { const d = new Date(); return ym(d) + '-' + String(d.getDate()).padStart(2, '0'); }
+function addM(m, n) { const [y, mo] = m.split('-').map(Number); return ym(new Date(y, mo - 1 + n, 1)); }
+function monthsBetween(a, b) { const out = []; let m = a; while (m <= b && out.length < 60) { out.push(m); m = addM(m, 1); } return out; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function num(v) { if (v === '' || v == null) return null; const n = Number(String(v).replace(/,/g, '')); return isFinite(n) ? n : null; }
+function won(v) { return v == null ? '–' : Math.round(v).toLocaleString('ko-KR'); }
+function n0(v) { return v == null ? '–' : Math.round(v).toLocaleString('ko-KR'); }
+function pct(v, d = 1) { return v == null ? '–' : (v * 100).toFixed(d) + '%'; }
+function r4(v) { return Math.round(v * 10000) / 10000; }
+function uid() { return 'P' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function $(s, r = document) { return r.querySelector(s); }
+function $$(s, r = document) { return [...r.querySelectorAll(s)]; }
+function toast(msg, ms = 2600) { const t = $('#toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', ms); }
+function busy(on) { $('#loading').style.display = on ? 'block' : 'none'; }
+function loadScript(src) {
+  return new Promise((ok, no) => {
+    if ($(`script[src="${src}"]`)) return ok();
+    const s = document.createElement('script'); s.src = src; s.onload = ok;
+    s.onerror = () => { s.remove(); no(new Error('라이브러리를 불러오지 못했습니다 (인터넷 연결 확인)')); };
+    document.head.appendChild(s);
+  });
+}
+function download(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+
+/* ---------- 마스터 ---------- */
+function setMaster(m) {
+  S.master = m;
+  S.pmap = new Map(m.products.map(p => [p.n, p]));
+  S.smap = new Map(m.stores.map(s => [s.d + '|' + s.n, s]));
+  const dm = new Map(m.dealers.map(d => [d.n, { n: d.n, o: d.o || '미지정', g: d.g || '미지정' }]));
+  m.stores.forEach(s => { if (!dm.has(s.d)) dm.set(s.d, { n: s.d, o: '미지정', g: '미지정', orphan: true }); });
+  S.dmap = dm;
+  $('#dl-prod').innerHTML = m.products.map(p => `<option value="${esc(p.n)}">`).join('');
+}
+const owners = () => [...new Set([...S.dmap.values()].map(d => d.o))].filter(o => o !== '미지정').sort();
+const regions = () => [...new Set([...S.dmap.values()].map(d => d.g))].filter(o => o !== '미지정');
+const dealersOf = (o) => [...S.dmap.values()].filter(d => !o || d.o === o).map(d => d.n).sort((a, b) => a.localeCompare(b, 'ko'));
+const storesOf = (d) => S.master.stores.filter(s => s.d === d);
+const dinfo = (n) => S.dmap.get(n) || { n, o: '미지정', g: '미지정' };
+
+/* ---------- 계산 ---------- */
+function bandOf(rate) { for (const b of RULE.BANDS) if (rate < b.max) return b.k; return RULE.BANDS[RULE.BANDS.length - 1].k; }
+function calcLine(l) {
+  const p = S.pmap.get(l.product);
+  const k = num(l.pack) || (p ? p.q : null);
+  const o = { k, known: !!p, warn: [] };
+  if (p && k) { o.normal = p.c / p.q * k; o.out = p.u * k; }
+  const sale = num(l.salePrice), inp = num(l.inPrice);
+  if (o.normal && sale != null) o.rate = r4((o.normal - sale) / o.normal);
+  if (inp && o.out != null) o.margin = r4((inp - o.out) / inp);
+  if (o.rate == null || o.margin == null) {
+    o.verdict = '미판정';
+    o.reasons = [l.product && !p ? '마스터에 없는 품목' : null, !l.product ? '품목 없음' : null, sale == null ? '행사판매가 없음' : null, !inp ? '점포입고가 없음' : null].filter(Boolean);
+  } else {
+    const r = [];
+    if (o.rate < RULE.RATE_MIN) r.push('행사율 미달');
+    if (o.margin > RULE.MARGIN_MAX) r.push('마진 초과');
+    o.verdict = r.length ? '불가' : '지원'; o.reasons = r;
+  }
+  o.band = o.rate == null ? null : bandOf(o.rate);
+  if (o.margin != null && o.margin < 0) o.warn.push('점포입고가가 출고가보다 낮음');
+  if (o.rate != null && o.rate < 0) o.warn.push('행사가가 정상가보다 높음');
+  const ea = l.unit === 'ea', qty = num(l.qty), sold = num(l.sold);
+  o.qtyEa = qty == null || !k ? null : (ea ? qty : qty * k);
+  o.soldEa = sold == null || !k ? null : (ea ? sold : sold * k);
+  o.turn = o.qtyEa && o.soldEa != null ? o.soldEa / o.qtyEa : null;
+  o.inAmt = qty != null && inp && k ? (ea ? qty / k * inp : qty * inp) : null;
+  o.saleAmt = sold != null && sale != null && k ? (ea ? sold / k * sale : sold * sale) : null;
+  return o;
+}
+function derive(r) {
+  const di = dinfo(r.dealer);
+  const lines = (r.lines || []).map(l => ({ ...l, c: calcLine(l) }));
+  const ph = r.photos || {};
+  const noEv = !(ph.event || []).length, noInv = !(ph.invoice || []).length;
+  const noRes = lines.some(l => num(l.sold) == null);
+  const ended = r.end && r.end < today();
+  return {
+    r, di, lines, noEv, noInv, noRes, late: ended && noRes,
+    ok: lines.filter(l => l.c.verdict === '지원').length,
+    no: lines.filter(l => l.c.verdict === '불가').length,
+    na: lines.filter(l => l.c.verdict === '미판정').length
+  };
+}
+// 대리점에게는 지원/불가 판정을 보여주지 않음 (오해 방지)
+const HV = () => (S.user || {}).role === 'dealer';
+function verdictBadge(v, reasons) {
+  const t = reasons && reasons.length ? ` title="${esc(reasons.join(', '))}"` : '';
+  if (v === '지원') return `<span class="b ok"${t}>✓ 지원</span>`;
+  if (v === '불가') return `<span class="b no"${t}>✕ 불가</span>`;
+  return `<span class="b na"${t}>– 미판정</span>`;
+}
+const stChip = s => `<span class="st s${esc(s)}">${esc(s === '계획' ? '계획' : stl(s))}</span>`;
+
+/* ---------- 저장소 (로컬 IndexedDB / 구글시트) ---------- */
+const IDB = {
+  db: null,
+  open() {
+    if (this.db) return Promise.resolve(this.db);
+    return new Promise((ok, no) => {
+      const q = indexedDB.open('promo_checker', 1);
+      q.onupgradeneeded = () => { const d = q.result; d.createObjectStore('records', { keyPath: 'id' }); d.createObjectStore('photos', { keyPath: 'id' }); };
+      q.onsuccess = () => { this.db = q.result; ok(this.db); };
+      q.onerror = () => no(q.error);
+    });
+  },
+  async tx(store, mode, fn) {
+    const d = await this.open();
+    return new Promise((ok, no) => {
+      const t = d.transaction(store, mode), s = t.objectStore(store);
+      const q = fn(s); t.oncomplete = () => ok(q && q.result); t.onerror = () => no(t.error);
+    });
+  },
+  all(s) { return this.tx(s, 'readonly', st => st.getAll()); },
+  get(s, k) { return this.tx(s, 'readonly', st => st.get(k)); },
+  put(s, v) { return this.tx(s, 'readwrite', st => st.put(v)); },
+  del(s, k) { return this.tx(s, 'readwrite', st => st.delete(k)); }
+};
+// Apps Script 웹 앱 주소로 열었을 때는 google.script.run 으로 서버와 통신
+const inGas = () => typeof google !== 'undefined' && google.script && google.script.run;
+function gsr(body) {
+  return new Promise((ok, no) => google.script.run
+    .withSuccessHandler(s => { try { ok(JSON.parse(s)); } catch (e) { no(new Error('서버 응답 형식 오류')); } })
+    .withFailureHandler(e => no(new Error((e && e.message) || String(e))))
+    .api(body));
+}
+const API = {
+  get on() { return !!(inGas() || S.cfg.url); },
+  async call(action, payload = {}) {
+    const u = S.user;
+    const auth = payload.auth || (u && u.pin ? { role: u.role, name: u.name, pin: u.pin } : null);
+    const body = JSON.stringify({ ...payload, auth, action, token: S.cfg.token || DEFAULT_CFG.token });
+    let j;
+    if (inGas()) j = await gsr(body);
+    else {
+      const res = await fetch(S.cfg.url, { method: 'POST', body });
+      if (!res.ok) throw new Error('서버 응답 오류 ' + res.status);
+      j = await res.json();
+    }
+    if (!j.ok) {
+      if (j.auth && action !== 'login') { S.user = null; save('user', null); updUser(); setTimeout(openUser, 50); }
+      throw new Error(j.error || '요청 실패');
+    }
+    return j;
+  }
+};
+function forSheet(rec) {
+  const d = derive(rec);
+  const out = JSON.parse(JSON.stringify(rec));
+  out._sheet = { owner: d.di.o, region: d.di.g, ok: d.ok, no: d.no };
+  out.lines = out.lines.map((l, i) => { const c = d.lines[i].c; return { ...l, _c: { normal: c.normal, out: c.out, rate: c.rate, band: c.band, margin: c.margin, verdict: c.verdict, reasons: c.reasons, turn: c.turn } }; });
+  return out;
+}
+function clean(rec) { const r = { ...rec }; delete r._sheet; r.lines = (r.lines || []).map(l => { const x = { ...l }; delete x._c; return x; }); return r; }
+const Repo = {
+  async list(from, to) {
+    if (API.on) return (await API.call('list', { from, to })).records.map(clean);
+    return (await IDB.all('records')).filter(r => r.month >= from && r.month <= to);
+  },
+  async save(rec, base) {
+    rec.updatedBy = userLabel();
+    if (API.on) {
+      const j = await API.call('upsert', { rec: forSheet(rec), base });
+      if (j.conflict) return { conflict: true, server: clean(j.server) };
+      return { rec: clean(j.rec) };
+    }
+    rec.updatedAt = new Date().toISOString();
+    await IDB.put('records', rec); return { rec };
+  },
+  async saveMany(recs) {
+    if (API.on) { for (let i = 0; i < recs.length; i += 15) await API.call('upsertMany', { recs: recs.slice(i, i + 15).map(forSheet) }); return; }
+    for (const r of recs) { r.updatedAt = new Date().toISOString(); await IDB.put('records', r); }
+  },
+  async setStatus(rec, status, comment) {
+    if (API.on) { const j = await API.call('setStatus', { id: rec.id, status, comment }); return clean(j.rec); }
+    const now = new Date().toISOString(), u = S.user || {};
+    const next = { ...rec, status, updatedBy: userLabel(), updatedAt: now };
+    const stamp = { by: userLabel(), at: now, result: status, comment: comment || '' };
+    if (u.role === 'owner' && (status === '승인' || status === '반려')) next.review = stamp;
+    if (u.role === 'admin' && (status === '최종승인' || status === '반려') && rec.status !== '마감') next.final = stamp;
+    next.log = [...(rec.log || []), { at: now, by: userLabel(), role: u.role, from: rec.status, to: status, comment: comment || '' }].slice(-30);
+    await IDB.put('records', next); return next;
+  },
+  async setStatusMany(recs, status, comment) {
+    if (API.on) { const j = await API.call('setStatus', { ids: recs.map(r => r.id), status, comment }); return j.recs.map(clean); }
+    const out = []; for (const r of recs) out.push(await this.setStatus(r, status, comment)); return out;
+  },
+  async remove(ids) {
+    if (API.on) return API.call('remove', { ids });
+    for (const id of ids) {
+      const r = await IDB.get('records', id);
+      if (r) for (const p of [...(r.photos?.event || []), ...(r.photos?.invoice || [])]) await IDB.del('photos', p.id);
+      await IDB.del('records', id);
+    }
+  },
+  async upload(dataURL) {
+    if (API.on) {
+      const j = await API.call('uploadPhoto', { data: dataURL.split(',')[1], mime: 'image/jpeg', name: 'promo_' + Date.now() + '.jpg' });
+      S.photo.set(j.id, dataURL); return { id: j.id };
+    }
+    const id = 'L' + uid(); await IDB.put('photos', { id, data: dataURL }); S.photo.set(id, dataURL); return { id };
+  },
+  async src(id) {
+    if (S.photo.has(id)) return S.photo.get(id);
+    let d = null;
+    if (id.startsWith('L')) { const r = await IDB.get('photos', id); d = r && r.data; }
+    else if (API.on) { d = (await API.call('photo', { id })).data; }
+    if (d) S.photo.set(id, d);
+    return d;
+  }
+};
+function userLabel() { const u = S.user; return u ? (u.name || '관리자') : ''; }
+
+/* 미전송 보관함: 네트워크 오류로 못 보낸 저장 건 */
+function outbox() { return load('outbox', []); }
+function pushOutbox(rec) { const o = outbox().filter(x => x.id !== rec.id); o.push(rec); save('outbox', o); }
+async function flushOutbox() {
+  const o = outbox(); if (!o.length) return;
+  const left = [];
+  for (const r of o) { try { const j = await Repo.save(r, null); S.recs.set(r.id, j.rec || r); } catch (e) { left.push(r); } }
+  save('outbox', left);
+  toast(left.length ? `미전송 ${left.length}건 남음` : '미전송 건을 모두 보냈습니다');
+  render();
+}
+
+/* ---------- 데이터 로딩 ---------- */
+async function ensure(from, to, force) {
+  const need = monthsBetween(from, to).filter(m => force || !S.loaded.has(m));
+  if (!need.length) return;
+  busy(true);
+  try {
+    const recs = await Repo.list(need[0], need[need.length - 1]);
+    for (const [id, r] of S.recs) if (need.includes(r.month)) S.recs.delete(id);
+    recs.forEach(r => S.recs.set(r.id, r));
+    outbox().forEach(r => S.recs.set(r.id, r));
+    need.forEach(m => S.loaded.add(m));
+  } catch (e) { toast('불러오기 실패: ' + e.message, 4000); }
+  finally { busy(false); }
+}
+function scopeRecs(from, to) {
+  const u = S.user || {};
+  return [...S.recs.values()].filter(r => {
+    if (r.month < from || r.month > to) return false;
+    if (u.role === 'dealer' && r.dealer !== u.name) return false;
+    const di = dinfo(r.dealer);
+    if (S.f.region && di.g !== S.f.region) return false;
+    if (S.f.owner && di.o !== S.f.owner) return false;
+    if (S.f.dealer && r.dealer !== S.f.dealer) return false;
+    return true;
+  });
+}
+function period() { return S.per.mode === 'm' ? { from: S.per.to, to: S.per.to } : { from: S.per.from, to: S.per.to }; }
+
+/* ---------- 공통 필터 바 ---------- */
+function filterBar(extra = '') {
+  const u = S.user || {};
+  const p = S.per;
+  const dl = dealersOf(S.f.owner).filter(d => !S.f.region || dinfo(d).g === S.f.region);
+  return `<div class="filters" id="fbar">
+    <div class="seg"><button data-pm="m" class="${p.mode === 'm' ? 'on' : ''}">단월</button><button data-pm="c" class="${p.mode === 'c' ? 'on' : ''}">누계</button></div>
+    ${p.mode === 'c' ? `<input type="month" id="pFrom" value="${p.from}"> <span class="faint">~</span>` : ''}
+    <input type="month" id="pTo" value="${p.to}">
+    ${u.role === 'dealer' ? '' : `
+    <label>권역 <select id="fRegion"><option value="">전체</option>${regions().map(g => `<option ${S.f.region === g ? 'selected' : ''}>${esc(g)}</option>`).join('')}</select></label>
+    <label>담당 <select id="fOwner"><option value="">전체</option>${owners().map(o => `<option ${S.f.owner === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></label>
+    <label>대리점 <select id="fDealer"><option value="">전체</option>${dl.map(d => `<option ${S.f.dealer === d ? 'selected' : ''}>${esc(d)}</option>`).join('')}</select></label>`}
+    ${extra}
+    <span class="hspace"></span>
+    <button class="btn sm" id="btnReload" title="서버에서 다시 불러오기">↻ 새로고침</button>
+  </div>`;
+}
+function bindFilterBar() {
+  $$('#fbar [data-pm]').forEach(b => b.onclick = () => { S.per.mode = b.dataset.pm; if (S.per.mode === 'c' && S.per.from >= S.per.to) S.per.from = S.per.to.slice(0, 4) + '-01'; render(); });
+  const on = (id, fn) => { const e = $('#' + id); if (e) e.onchange = fn; };
+  on('pTo', e => { if (e.target.value) { S.per.to = e.target.value; if (S.per.from > S.per.to) S.per.from = S.per.to; render(); } });
+  on('pFrom', e => { if (e.target.value) { S.per.from = e.target.value; if (S.per.from > S.per.to) S.per.to = S.per.from; render(); } });
+  on('fRegion', e => { S.f.region = e.target.value; S.f.dealer = ''; render(); });
+  on('fOwner', e => { S.f.owner = e.target.value; S.f.dealer = ''; render(); });
+  on('fDealer', e => { S.f.dealer = e.target.value; render(); });
+  $('#btnReload').onclick = async () => { const p = period(); S.loaded.clear(); await ensure(addM(p.to, -5) < p.from ? addM(p.to, -5) : p.from, p.to, true); render(); };
+}
+
+/* ---------- 정렬 가능한 표 ---------- */
+function table(id, cols, rows, defSort) {
+  const st = S.sort[id] || defSort || { k: cols[0].k, d: 1 };
+  const sorted = [...rows].sort((a, b) => {
+    const x = a[st.k], y = b[st.k];
+    if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1;
+    return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'ko')) * st.d;
+  });
+  return `<div class="tw" style="max-height:440px"><table data-tid="${id}"><thead><tr>${cols.map(c => `<th data-k="${c.k}" class="${c.r ? 'r' : ''}">${esc(c.t)}${st.k === c.k ? `<span class="ar">${st.d > 0 ? '▲' : '▼'}</span>` : ''}</th>`).join('')}</tr></thead>
+  <tbody>${sorted.length ? sorted.map(r => `<tr>${cols.map(c => `<td class="${c.r ? 'r num' : ''}">${c.f ? c.f(r[c.k], r) : esc(r[c.k] ?? '–')}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${cols.length}" class="empty">데이터가 없습니다</td></tr>`}</tbody></table></div>`;
+}
+document.addEventListener('click', e => {
+  const th = e.target.closest('th[data-k]'); if (!th) return;
+  const id = th.closest('table').dataset.tid, k = th.dataset.k;
+  const cur = S.sort[id];
+  S.sort[id] = { k, d: cur && cur.k === k ? -cur.d : (k === 'name' || k === 'dealer' || k === 'owner' || k === 'product' ? 1 : -1) };
+  render();
+});
+
+/* ---------- 툴팁 ---------- */
+document.addEventListener('mousemove', e => {
+  const t = e.target.closest('[data-tip]'), tip = $('#tip');
+  if (!t) { tip.style.display = 'none'; return; }
+  tip.textContent = t.dataset.tip; tip.style.display = 'block';
+  const w = tip.offsetWidth, x = Math.min(e.clientX + 14, innerWidth - w - 8);
+  tip.style.left = x + 'px'; tip.style.top = (e.clientY + 14) + 'px';
+});
+
+/* ---------- 집계 ---------- */
+function aggregate(recs) {
+  const D = recs.map(derive);
+  const lines = D.flatMap(d => d.lines.map(l => ({ ...l, d })));
+  const sum = (arr, f) => arr.reduce((s, x) => s + (f(x) || 0), 0);
+  const turnOf = ls => { const w = ls.filter(l => l.c.soldEa != null && l.c.qtyEa); const q = sum(w, l => l.c.qtyEa); return q ? sum(w, l => l.c.soldEa) / q : null; };
+  // 범위 내 대리점 (필터 반영)
+  const u = S.user || {};
+  let scopeDealers = [...S.dmap.values()].filter(d => (!S.f.region || d.g === S.f.region) && (!S.f.owner || d.o === S.f.owner) && (!S.f.dealer || d.n === S.f.dealer));
+  if (u.role === 'dealer') scopeDealers = scopeDealers.filter(d => d.n === u.name);
+  const judged = lines.filter(l => l.c.verdict !== '미판정');
+  const k = {
+    recs: D.length,
+    dealers: new Set(D.map(d => d.r.dealer)).size, dealerTotal: scopeDealers.length,
+    stores: new Set(D.map(d => d.r.dealer + '|' + d.r.store)).size,
+    products: new Set(lines.map(l => l.product).filter(Boolean)).size,
+    lines: lines.length,
+    ok: judged.filter(l => l.c.verdict === '지원').length, judged: judged.length,
+    turn: turnOf(lines),
+    noProof: D.filter(d => d.noEv || d.noInv).length,
+    late: D.filter(d => d.late).length,
+    pending: D.filter(d => d.r.status === '계획').length,
+    waitFinal: D.filter(d => d.r.status === '승인').length,
+    finalOk: D.filter(d => d.r.status === '최종승인' || d.r.status === '마감').length,
+    inAmt: sum(lines, l => l.c.inAmt)
+  };
+  // 대리점별
+  const byDealer = scopeDealers.map(di => {
+    const dd = D.filter(d => d.r.dealer === di.n), ls = lines.filter(l => l.d.r.dealer === di.n);
+    return {
+      dealer: di.n, owner: di.o, region: di.g, recs: dd.length,
+      stores: new Set(dd.map(d => d.r.store)).size, products: new Set(ls.map(l => l.product)).size,
+      ok: ls.filter(l => l.c.verdict === '지원').length, no: ls.filter(l => l.c.verdict === '불가').length,
+      qty: sum(ls, l => l.c.qtyEa) || null, sold: ls.some(l => l.c.soldEa != null) ? sum(ls, l => l.c.soldEa) : null,
+      turn: turnOf(ls), inAmt: sum(ls, l => l.c.inAmt) || null
+    };
+  });
+  // 담당별
+  const byOwner = [...new Set(scopeDealers.map(d => d.o))].sort().map(o => {
+    const ds = byDealer.filter(x => x.owner === o), part = ds.filter(x => x.recs > 0);
+    const ls = lines.filter(l => l.d.di.o === o);
+    return { owner: o, total: ds.length, part: part.length, rate: ds.length ? part.length / ds.length : null, stores: sum(part, x => x.stores), recs: sum(part, x => x.recs), turn: turnOf(ls) };
+  });
+  // 품목별
+  const pm = new Map();
+  lines.forEach(l => { if (!l.product) return; if (!pm.has(l.product)) pm.set(l.product, []); pm.get(l.product).push(l); });
+  const byProduct = [...pm].map(([p, ls]) => {
+    const rs = ls.filter(l => l.c.rate != null);
+    return {
+      product: p, stores: new Set(ls.map(l => l.d.r.dealer + '|' + l.d.r.store)).size, dealers: new Set(ls.map(l => l.d.r.dealer)).size,
+      ok: ls.filter(l => l.c.verdict === '지원').length, no: ls.filter(l => l.c.verdict === '불가').length,
+      qty: sum(ls, l => l.c.qtyEa) || null, sold: ls.some(l => l.c.soldEa != null) ? sum(ls, l => l.c.soldEa) : null,
+      turn: turnOf(ls), rate: rs.length ? sum(rs, l => l.c.rate) / rs.length : null
+    };
+  });
+  // 행사율 구간
+  const bands = RULE.BANDS.map(b => ({ k: b.k, max: b.max, n: lines.filter(l => l.c.band === b.k).length }));
+  return { D, lines, k, byDealer, byOwner, byProduct, bands };
+}
+
+/* ---------- 차트 (HTML 막대) ---------- */
+function hbars(rows, opt = {}) {
+  if (!rows.length) return `<div class="empty">데이터가 없습니다</div>`;
+  const max = opt.max || Math.max(...rows.map(r => r.v), 1);
+  return `<div class="hb">${rows.map(r => `<div class="lab" title="${esc(r.l)}">${esc(r.l)}</div>
+    <div class="trk" data-tip="${esc(r.tip || '')}"><div class="fill" style="width:${Math.max(0, r.v / max * 100)}%"></div></div>
+    <div class="val num">${r.t}</div>`).join('')}</div>`;
+}
+function columns(rows) {
+  const max = Math.max(...rows.map(r => r.v), 1);
+  return `<div class="cols">${rows.map(r => `<div class="c" data-tip="${esc(r.tip || '')}"><div class="cv num">${r.t}</div><div class="bar ${r.mute ? 'mute' : ''}" style="height:${r.v / max * 85}%"></div></div>`).join('')}</div>
+  <div class="cols-x">${rows.map(r => `<div>${esc(r.l)}</div>`).join('')}</div>`;
+}
+
+/* =========================================================
+   화면: 대시보드
+   ========================================================= */
+async function viewDash() {
+  const p = period();
+  const trendFrom = addM(p.to, -5);
+  await ensure(trendFrom < p.from ? trendFrom : p.from, p.to);
+  const A = aggregate(scopeRecs(p.from, p.to));
+  const k = A.k;
+  const perLabel = p.from === p.to ? p.to.replace('-', '년 ') + '월' : `${p.from.replace('-', '.')} ~ ${p.to.replace('-', '.')} 누계`;
+  // 월별 추이
+  const trend = monthsBetween(trendFrom, p.to).map(m => {
+    const a = aggregate(scopeRecs(m, m));
+    return { l: m.slice(5) + '월', v: a.k.stores, t: a.k.stores, tip: `${m}\n참여 점포 ${a.k.stores}곳 · 행사 ${a.k.recs}건\n참여 대리점 ${a.k.dealers}곳 · 회전율 ${pct(a.k.turn)}` };
+  });
+  const dealerRows = S.showAllDealers ? A.byDealer : A.byDealer.filter(r => r.recs > 0);
+  const topP = [...A.byProduct].sort((a, b) => b.stores - a.stores).slice(0, 10);
+  $('#main').innerHTML = `
+  ${filterBar(`<button class="btn sm" id="xXlsx">엑셀</button><button class="btn sm" id="xPdf">PDF</button><button class="btn sm" id="xJpg">JPG</button>`)}
+  <div id="dashCap">
+  <div class="row" style="margin:0 0 10px;justify-content:space-between"><div><b style="font-size:17px">${esc(perLabel)}</b> <span class="muted small">${S.f.region || ''} ${S.f.owner || ''} ${S.f.dealer || ''}</span></div>${HV() ? '' : `<span class="faint small">기준: 행사율 ≥ ${RULE.RATE_MIN * 100}% 그리고 대리점 마진율 ≤ ${RULE.MARGIN_MAX * 100}% → 지원</span>`}</div>
+  <div class="kpis">
+    <div class="card kpi"><div class="l">행사 건수</div><div class="v num">${k.recs}<small>건</small></div><div class="s">품목 ${k.lines}개 라인</div></div>
+    <div class="card kpi"><div class="l">참여 대리점</div><div class="v num">${k.dealers}<small>/ ${k.dealerTotal}</small></div><div class="s">참여율 ${pct(k.dealerTotal ? k.dealers / k.dealerTotal : null, 0)}</div></div>
+    <div class="card kpi"><div class="l">참여 점포</div><div class="v num">${k.stores}<small>곳</small></div><div class="s">입고금액 ${won(k.inAmt)}원</div></div>
+    <div class="card kpi"><div class="l">참여 품목</div><div class="v num">${k.products}<small>종</small></div><div class="s">전체 ${S.master.products.length}종 중</div></div>
+    ${HV() ? `<div class="card kpi"><div class="l">최종승인</div><div class="v num">${k.finalOk}<small>/ ${k.recs}건</small></div><div class="s">담당 검토 대기 ${k.pending}건</div></div>`
+    : `<div class="card kpi"><div class="l">지원 판정</div><div class="v num">${pct(k.judged ? k.ok / k.judged : null, 0)}</div><div class="s">지원 ${k.ok} · 불가 ${k.judged - k.ok}</div></div>`}
+    <div class="card kpi"><div class="l">행사 회전율</div><div class="v num">${pct(k.turn, 0)}</div><div class="s">판매수량 ÷ 입고수량</div></div>
+  </div>
+  <div class="alerts">
+    ${k.pending ? `<span class="b na" data-go="계획">담당 검토 대기 ${k.pending}건 ›</span>` : ''}
+    ${k.waitFinal ? `<span class="b ${(S.user || {}).role === 'admin' ? 'wa' : 'na'}" data-go="승인">최종승인 대기 ${k.waitFinal}건 ›</span>` : ''}
+    ${k.finalOk ? `<span class="b ok" data-go="최종승인">최종승인 ${k.finalOk}건 ›</span>` : ''}
+    ${k.noProof ? `<span class="b wa">⚠ 증빙 누락 ${k.noProof}건</span>` : ''}
+    ${k.late ? `<span class="b no">⏱ 행사 종료 후 결과 미입력 ${k.late}건</span>` : ''}
+  </div>
+  <div class="grid2">
+    <div class="card sec"><h3>담당별 행사참여 대리점</h3><p class="sub">담당 대리점 중 이번 기간에 행사계획을 올린 대리점 비율</p>
+      ${hbars(A.byOwner.map(o => ({ l: o.owner, v: o.rate || 0, t: `${o.part}/${o.total}곳 · ${pct(o.rate, 0)}`, tip: `${o.owner}\n참여 대리점 ${o.part}/${o.total}곳\n참여 점포 ${o.stores}곳 · 행사 ${o.recs}건\n회전율 ${pct(o.turn)}` })), { max: 1 })}
+    </div>
+    <div class="card sec"><h3>행사율 구간 분포</h3><p class="sub">품목 라인 기준 · 정상 소비자가 대비 할인율</p>
+      ${HV() ? '' : `<div class="legend"><span><i style="background:var(--accent)"></i>지원 기준(20%) 이상</span><span><i style="background:var(--muted-bar)"></i>기준 미달</span></div>`}
+      ${columns(A.bands.map(b => ({ l: b.k, v: b.n, t: b.n, mute: !HV() && b.max <= RULE.RATE_MIN, tip: `${b.k}: ${b.n}개 라인` })))}
+    </div>
+    <div class="card sec"><h3>월별 참여 점포 추이</h3><p class="sub">최근 6개월 · 막대에 마우스를 올리면 상세</p>${columns(trend)}</div>
+    <div class="card sec"><h3>참여 품목 TOP 10</h3><p class="sub">행사를 건 점포 수 기준</p>
+      ${hbars(topP.map(r => ({ l: r.product, v: r.stores, t: `${r.stores}곳`, tip: `${r.product}\n점포 ${r.stores}곳 · 대리점 ${r.dealers}곳\n평균 행사율 ${pct(r.rate)} · 회전율 ${pct(r.turn)}` })))}
+    </div>
+  </div>
+  <div class="card sec"><div class="row" style="justify-content:space-between"><div><h3>대리점별 행사 현황</h3><p class="sub">수량은 낱개(1입) 환산 · 열 제목을 누르면 정렬</p></div>
+    <label class="small muted"><input type="checkbox" id="allD" ${S.showAllDealers ? 'checked' : ''}> 미참여 대리점 포함</label></div>
+    ${table('dealer', [
+      { k: 'dealer', t: '대리점' }, { k: 'owner', t: '담당' }, { k: 'region', t: '권역' },
+      { k: 'stores', t: '참여점포', r: 1 }, { k: 'products', t: '품목수', r: 1 }, { k: 'recs', t: '행사건', r: 1 },
+      ...(HV() ? [] : [{ k: 'ok', t: '지원', r: 1 }, { k: 'no', t: '불가', r: 1 }]),
+      { k: 'qty', t: '입고수량', r: 1, f: n0 }, { k: 'sold', t: '판매수량', r: 1, f: n0 }, { k: 'turn', t: '회전율', r: 1, f: v => pct(v) },
+      { k: 'inAmt', t: '입고금액', r: 1, f: won }], dealerRows, { k: 'stores', d: -1 })}
+  </div>
+  <div class="grid2">
+    <div class="card sec"><h3>담당별 요약</h3><p class="sub">&nbsp;</p>
+      ${table('owner', [{ k: 'owner', t: '담당' }, { k: 'part', t: '참여대리점', r: 1 }, { k: 'total', t: '담당대리점', r: 1 }, { k: 'rate', t: '참여율', r: 1, f: v => pct(v, 0) }, { k: 'stores', t: '참여점포', r: 1 }, { k: 'recs', t: '행사건', r: 1 }, { k: 'turn', t: '회전율', r: 1, f: v => pct(v) }], A.byOwner, { k: 'owner', d: 1 })}
+    </div>
+    <div class="card sec"><h3>품목별 현황</h3><p class="sub">수량은 낱개(1입) 환산</p>
+      ${table('prod', [{ k: 'product', t: '품목' }, { k: 'stores', t: '점포', r: 1 }, ...(HV() ? [] : [{ k: 'ok', t: '지원', r: 1 }, { k: 'no', t: '불가', r: 1 }]), { k: 'rate', t: '평균행사율', r: 1, f: v => pct(v) }, { k: 'sold', t: '판매', r: 1, f: n0 }, { k: 'turn', t: '회전율', r: 1, f: v => pct(v) }], A.byProduct, { k: 'stores', d: -1 })}
+    </div>
+  </div>
+  </div>`;
+  bindFilterBar();
+  $('#allD').onchange = e => { S.showAllDealers = e.target.checked; render(); };
+  $('#xXlsx').onclick = () => exportXlsx(A, perLabel);
+  $('#xPdf').onclick = () => exportImage('#dashCap', '행사계획_대시보드_' + perLabel, 'pdf');
+  $('#xJpg').onclick = () => exportImage('#dashCap', '행사계획_대시보드_' + perLabel, 'jpg');
+  $$('[data-go]').forEach(b => { b.style.cursor = 'pointer'; b.onclick = () => { S.lf = { status: b.dataset.go, verdict: '', flag: '', q: '' }; go('list'); }; });
+}
+
+/* =========================================================
+   화면: 행사목록
+   ========================================================= */
+async function viewList() {
+  const p = period();
+  await ensure(p.from, p.to);
+  let D = scopeRecs(p.from, p.to).map(derive);
+  const lf = S.lf;
+  if (lf.status) D = D.filter(d => d.r.status === lf.status);
+  if (HV()) lf.verdict = '';
+  if (lf.verdict === 'ok') D = D.filter(d => d.ok > 0);
+  if (lf.verdict === 'no') D = D.filter(d => d.no > 0);
+  if (lf.verdict === 'na') D = D.filter(d => d.na > 0);
+  if (lf.flag === 'proof') D = D.filter(d => d.noEv || d.noInv);
+  if (lf.flag === 'res') D = D.filter(d => d.noRes);
+  if (lf.flag === 'late') D = D.filter(d => d.late);
+  if (lf.q) { const q = lf.q.toLowerCase(); D = D.filter(d => (d.r.store + d.r.dealer + d.lines.map(l => l.product).join()).toLowerCase().includes(q)); }
+  D.sort((a, b) => (b.r.start || '').localeCompare(a.r.start || '') || (b.r.updatedAt || '').localeCompare(a.r.updatedAt || ''));
+  const admin = (S.user || {}).role === 'admin';
+  const selectable = new Set(admin ? D.filter(d => d.r.status === '승인').map(d => d.r.id) : []);
+  const sel = (id, opts, v) => `<select id="${id}">${opts.map(([k, t]) => `<option value="${k}" ${v === k ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
+  $('#main').innerHTML = `
+  ${filterBar(`
+    ${sel('lStatus', [['', '상태 전체'], ...STATUSES.map(s => [s, stl(s)])], lf.status)}
+    ${HV() ? '' : sel('lVerdict', [['', '판정 전체'], ['ok', '지원 포함'], ['no', '불가 포함'], ['na', '미판정 포함']], lf.verdict)}
+    ${sel('lFlag', [['', '점검 항목 전체'], ['proof', '증빙 누락'], ['res', '결과 미입력'], ['late', '종료 후 결과 미입력']], lf.flag)}
+    <input type="search" id="lQ" placeholder="점포·품목 검색" value="${esc(lf.q)}" style="width:150px">`)}
+  ${admin ? (() => { const n = [...S.sel].filter(id => selectable.has(id)).length; return `<div class="bulk ${n ? '' : 'hide'}" id="bulk"><b>${n}건 선택</b><span class="hspace"></span><button class="btn sm good" id="bkOk">✓ 선택 최종승인</button><button class="btn sm bad" id="bkNo" style="background:#fff">✕ 선택 반려</button><button class="btn sm" id="bkClr" style="background:transparent;color:#fff;border-color:#666">선택 해제</button></div>`; })() : ''}
+  <div class="row" style="justify-content:space-between;margin-bottom:10px"><span class="muted">${D.length}건${admin && selectable.size ? ` · <label style="cursor:pointer"><input type="checkbox" id="ckAll" ${[...selectable].every(id => S.sel.has(id)) ? 'checked' : ''}> 최종승인 대기 ${selectable.size}건 모두 선택</label>` : ''}</span><button class="btn pri" onclick="openForm()">+ 행사계획 등록</button></div>
+  ${D.length ? `<div class="lst">${D.map(d => {
+    const r = d.r;
+    return `<div class="card it" data-id="${r.id}">
+      <div class="t">${selectable.has(r.id) ? `<input type="checkbox" class="ck" data-ck="${r.id}" ${S.sel.has(r.id) ? 'checked' : ''} title="최종 결재 선택">` : ''}<div style="flex:1;min-width:0"><div class="nm">${esc(r.store)}</div><div class="meta">${esc(r.dealer)} · ${esc(d.di.o)} · ${esc(r.start)} ~ ${esc(r.end)}</div></div>${stChip(r.status)}</div>
+      <div class="meta" style="margin-top:6px">${d.lines.slice(0, 3).map(l => esc(l.product || '(품목 없음)')).join(', ')}${d.lines.length > 3 ? ` 외 ${d.lines.length - 3}` : ''}</div>
+      ${r.review && r.status !== '계획' ? `<div class="meta" style="margin-top:4px">담당 ${esc(r.review.by)}: ${esc(stl(r.review.result))}${r.review.comment ? ' · ' + esc(r.review.comment) : ''}</div>` : ''}
+      ${r.final ? `<div class="meta">관리자: ${esc(stl(r.final.result))}${r.final.comment ? ' · ' + esc(r.final.comment) : ''}</div>` : ''}
+      <div class="bd">
+        ${HV() ? `<span class="b na">품목 ${d.lines.length}개</span>` : `${d.ok ? `<span class="b ok">✓ 지원 ${d.ok}</span>` : ''}${d.no ? `<span class="b no">✕ 불가 ${d.no}</span>` : ''}${d.na ? `<span class="b na">– 미판정 ${d.na}</span>` : ''}`}
+        ${d.noEv || d.noInv ? `<span class="b wa">⚠ 증빙 ${d.noEv && d.noInv ? '없음' : d.noEv ? '행사사진 없음' : '명세서 없음'}</span>` : ''}
+        ${d.late ? `<span class="b no">⏱ 결과 미입력</span>` : d.noRes ? `<span class="b na">결과 대기</span>` : ''}
+        ${r.dummy ? `<span class="b na">더미</span>` : ''}
+      </div></div>`;
+  }).join('')}</div>` : `<div class="card empty">이 기간에 등록된 행사계획이 없습니다.<br><br><button class="btn pri" onclick="openForm()">+ 행사계획 등록</button></div>`}`;
+  bindFilterBar();
+  $('#lStatus').onchange = e => { lf.status = e.target.value; render(); };
+  if ($('#lVerdict')) $('#lVerdict').onchange = e => { lf.verdict = e.target.value; render(); };
+  $('#lFlag').onchange = e => { lf.flag = e.target.value; render(); };
+  $('#lQ').oninput = e => { lf.q = e.target.value; clearTimeout(viewList._t); viewList._t = setTimeout(() => { render().then(() => { const q = $('#lQ'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }); }, 300); };
+  $$('.it').forEach(c => c.onclick = e => { if (e.target.closest('.ck')) return; openDetail(c.dataset.id); });
+  $$('.ck').forEach(c => c.onchange = () => { c.checked ? S.sel.add(c.dataset.ck) : S.sel.delete(c.dataset.ck); render(); });
+  const all = $('#ckAll'); if (all) all.onchange = () => { selectable.forEach(id => all.checked ? S.sel.add(id) : S.sel.delete(id)); render(); };
+  const picked = () => [...S.sel].filter(id => selectable.has(id)).map(id => S.recs.get(id));
+  const bulk = async (status) => {
+    const rs = picked(); if (!rs.length) return;
+    let comment = '';
+    if (status === '반려') { comment = (prompt(`선택한 ${rs.length}건을 반려합니다. 반려 사유를 적어주세요.`) || '').trim(); if (!comment) return toast('반려 사유가 없어 취소했습니다'); }
+    else if (!confirm(`선택한 ${rs.length}건을 최종승인할까요?\n(담당 ${[...new Set(rs.map(r => dinfo(r.dealer).o))].join(', ')})`)) return;
+    busy(true);
+    try { const out = await Repo.setStatusMany(rs, status, comment); out.forEach(n => S.recs.set(n.id, n)); S.sel.clear(); toast(`${out.length}건 ${stl(status)} 처리했습니다`); render(); }
+    catch (e) { toast('처리 실패: ' + e.message, 5000); } finally { busy(false); }
+  };
+  const on = (id, fn) => { const e = $('#' + id); if (e) e.onclick = fn; };
+  on('bkOk', () => bulk('최종승인')); on('bkNo', () => bulk('반려')); on('bkClr', () => { S.sel.clear(); render(); });
+}
+
+/* =========================================================
+   모달 공통
+   ========================================================= */
+function modal(html) { const o = $('#ov'); o.innerHTML = `<div class="md">${html}</div>`; o.classList.add('on'); o.scrollTop = 0; document.body.style.overflow = 'hidden'; }
+function closeModal() { const o = $('#ov'); o.classList.remove('on'); o.innerHTML = ''; document.body.style.overflow = ''; }
+$('#ov').addEventListener('mousedown', e => { if (e.target.id === 'ov' && !$('#ov .md form')) closeModal(); });
+function lightbox(src) { const l = $('#lb'); l.querySelector('img').src = src; l.classList.add('on'); }
+async function fillThumbs(root) {
+  for (const im of $$('img[data-ph]', root)) {
+    try { const s = await Repo.src(im.dataset.ph); if (s) { im.src = s; im.parentElement.onclick = ev => { if (!ev.target.closest('.rm')) lightbox(s); }; } else im.alt = '없음'; } catch (e) { im.alt = '불러오기 실패'; }
+  }
+}
+
+/* =========================================================
+   등록 / 수정 폼
+   ========================================================= */
+let F = null, FBase = null;
+function blankLine() { return { product: '', pack: '', qty: '', unit: 'box', inPrice: '', salePrice: '', sold: '' }; }
+function canEditPlan(r) {
+  const u = S.user || {};
+  if (u.role === 'admin') return true;
+  if (r.status === '마감' || r.status === '최종승인') return false;
+  if (u.role === 'dealer') return r.status === '계획' || r.status === '반려';
+  return true;
+}
+function openForm(id) {
+  const u = S.user || {};
+  if (!S.user) return openUser();
+  const src = id ? S.recs.get(id) : null;
+  if (src && src.status === '마감' && u.role !== 'admin') return toast('마감된 행사는 관리자만 수정할 수 있습니다');
+  if (src && src.status === '최종승인' && u.role === 'owner') return toast('최종승인된 행사는 관리자만 수정할 수 있습니다');
+  F = src ? JSON.parse(JSON.stringify(src)) : {
+    id: uid(), month: '', dealer: u.role === 'dealer' ? u.name : (S.f.dealer || ''), store: '', addr: '',
+    start: '', end: '', lines: [blankLine()], photos: { event: [], invoice: [] }, memo: '', status: '계획',
+    createdAt: new Date().toISOString(), createdBy: userLabel()
+  };
+  F.photos = F.photos || { event: [], invoice: [] };
+  FBase = src ? src.updatedAt : null;
+  const lockPlan = src ? !canEditPlan(src) : false;
+  F._lock = lockPlan;
+  const dl = u.role === 'dealer' ? [u.name] : (u.role === 'owner' ? dealersOf(u.name) : dealersOf());
+  modal(`<form id="pf" onsubmit="return false">
+  <div class="mh"><h2>${src ? '행사계획 수정' : '행사계획 등록'}</h2>${src ? stChip(F.status) : ''}<button type="button" class="x" onclick="closeModal()">×</button></div>
+  <div class="mb">
+    ${lockPlan ? `<div class="warnbox" style="margin:0 0 12px">${esc(stl(F.status))}된 계획이라 ① 계획 내용은 잠겨 있어요. ② 증빙과 ③ 결과만 입력할 수 있습니다.</div>` : ''}
+    <div class="fs"><h4><span class="n">1</span>계획</h4>
+      <div class="fg">
+        <label class="f"><span>대리점 <b>*</b></span><select data-f="dealer" ${lockPlan || u.role === 'dealer' ? 'disabled' : ''}><option value="">선택</option>${dl.map(d => `<option ${F.dealer === d ? 'selected' : ''}>${esc(d)}</option>`).join('')}${F.dealer && !dl.includes(F.dealer) ? `<option selected>${esc(F.dealer)}</option>` : ''}</select></label>
+        <label class="f span2"><span>점포 <b>*</b> <span class="faint" style="font-weight:400">목록에서 고르거나 직접 입력</span></span><input type="text" data-f="store" list="dl-store" value="${esc(F.store)}" placeholder="점포명 검색" ${lockPlan ? 'disabled' : ''} autocomplete="off"><datalist id="dl-store"></datalist></label>
+        <label class="f"><span>담당 / 권역</span><input type="text" id="fOwnerTxt" disabled></label>
+        <label class="f span4"><span>점포 주소</span><input type="text" data-f="addr" value="${esc(F.addr)}" placeholder="점포를 고르면 자동 입력" ${lockPlan ? 'disabled' : ''}></label>
+        <label class="f"><span>행사 시작일 <b>*</b></span><input type="date" data-f="start" value="${esc(F.start)}" ${lockPlan ? 'disabled' : ''}></label>
+        <label class="f"><span>행사 종료일 <b>*</b></span><input type="date" data-f="end" value="${esc(F.end)}" ${lockPlan ? 'disabled' : ''}></label>
+        <label class="f span2"><span>메모</span><input type="text" data-f="memo" value="${esc(F.memo || '')}" placeholder="행사 형태, 특이사항 등"></label>
+      </div>
+      <div id="storeWarn"></div>
+      <div style="margin-top:14px;font-weight:700;font-size:13px">행사 품목 <span class="faint small" style="font-weight:400">· 가격은 선택한 판매입수(박스) 기준</span></div>
+      <div id="lines" style="margin-top:8px"></div>
+      ${lockPlan ? '' : `<button type="button" class="btn sm" id="addLine">+ 품목 추가</button>`}
+    </div>
+    <div class="fs"><h4><span class="n">2</span>증빙</h4>
+      <div class="fg"><div class="f span2"><span>행사 사진</span><div class="ph" id="ph-event"></div></div>
+      <div class="f span2"><span>거래명세서</span><div class="ph" id="ph-invoice"></div></div></div>
+      <input type="file" id="phFile" accept="image/*" multiple class="hide">
+    </div>
+    <div class="fs"><h4><span class="n">3</span>결과</h4>
+      <div class="note" style="margin-bottom:8px">행사 종료 후 품목별 판매수량을 입력하세요. 단위는 입고수량과 같습니다.</div>
+      <div id="results"></div>
+    </div>
+  </div>
+  <div class="mf">
+    <span class="hspace faint small" id="fMsg"></span>
+    <button type="button" class="btn" onclick="closeModal()">취소</button>
+    <button type="button" class="btn pri" id="fSave">저장</button>
+  </div></form>`);
+  bindForm();
+}
+function packOpts(l) {
+  const p = S.pmap.get(l.product);
+  const set = new Set([...(S.master.packs || []), ...(p ? [p.q] : []), ...(num(l.pack) ? [num(l.pack)] : [])]);
+  return [...set].sort((a, b) => a - b).map(k => `<option value="${k}" ${num(l.pack) === k ? 'selected' : ''}>${k}입${p && p.q === k ? '(기본)' : ''}</option>`).join('');
+}
+function lineHTML(l, i) {
+  const dis = F._lock ? 'disabled' : '';
+  const k = num(l.pack);
+  return `<div class="ln" data-li="${i}">
+    <div class="lh"><b class="small">품목 ${i + 1}</b>${F._lock || F.lines.length < 2 ? '' : `<button type="button" class="btn sm bad" data-rm="${i}">삭제</button>`}</div>
+    <div class="lg">
+      <label class="f pf"><span>행사 예정 품목</span><input type="text" list="dl-prod" data-lf="product" value="${esc(l.product)}" placeholder="품목명 검색" ${dis} autocomplete="off"></label>
+      <label class="f"><span>판매입수</span><select data-lf="pack" ${dis}>${l.product ? packOpts(l) : '<option value="">품목 먼저</option>'}</select></label>
+      <label class="f"><span>행사 입고수량</span><div class="qty"><input type="number" inputmode="numeric" min="0" data-lf="qty" value="${esc(l.qty)}" ${dis}><select data-lf="unit" ${dis}><option value="box" ${l.unit !== 'ea' ? 'selected' : ''}>박스${k ? `(${k}입)` : ''}</option><option value="ea" ${l.unit === 'ea' ? 'selected' : ''}>낱개(1입)</option></select></div></label>
+      <label class="f"><span>점포입고가 (원)</span><input type="number" inputmode="numeric" min="0" data-lf="inPrice" value="${esc(l.inPrice)}" ${dis}></label>
+      <label class="f"><span>소비자 판매가 (원)</span><input type="number" inputmode="numeric" min="0" data-lf="salePrice" value="${esc(l.salePrice)}" ${dis}></label>
+    </div>
+    <div class="calc" data-calc="${i}"></div>
+  </div>`;
+}
+function calcHTML(l) {
+  const c = calcLine(l);
+  const k = c.k;
+  return `<span>정상 소비자가 <b class="num">${won(c.normal)}</b></span><span>출고가 <b class="num">${won(c.out)}</b></span>
+    <span>행사율 <b class="num">${pct(c.rate)}</b>${c.band ? ` <span class="faint">(${c.band})</span>` : ''}</span>
+    <span>대리점 마진율 <b class="num">${pct(c.margin)}</b></span>
+    ${HV() ? '' : verdictBadge(c.verdict, c.reasons)}
+    ${!HV() && c.reasons && c.reasons.length ? `<span class="${c.verdict === '불가' ? '' : 'faint'}" style="${c.verdict === '불가' ? 'color:var(--bad-t)' : ''}">${esc(c.reasons.join(' · '))}</span>` : ''}
+    ${c.warn.map(w => `<span class="b wa">⚠ ${esc(w)}</span>`).join('')}
+    ${l.unit === 'ea' && k ? `<span class="faint">입고 ${n0(num(l.qty))}개 = ${num(l.qty) != null ? (num(l.qty) / k).toFixed(1) : '–'}박스</span>` : ''}`;
+}
+function renderLines() {
+  $('#lines').innerHTML = F.lines.map(lineHTML).join('');
+  F.lines.forEach((l, i) => $(`[data-calc="${i}"]`).innerHTML = calcHTML(l));
+  renderResults();
+}
+function renderResults() {
+  $('#results').innerHTML = F.lines.length ? `<div class="tw"><table><thead><tr><th>품목</th><th class="r">입고</th><th class="r">판매수량</th><th class="r">회전율</th></tr></thead><tbody>
+  ${F.lines.map((l, i) => { const c = calcLine(l); const u = l.unit === 'ea' ? '개' : '박스'; return `<tr><td style="white-space:normal">${esc(l.product || '–')}</td><td class="r num">${n0(num(l.qty))} ${u}</td>
+    <td class="r"><input type="number" inputmode="numeric" min="0" data-sold="${i}" value="${esc(l.sold)}" style="width:96px;text-align:right" ${F.status === '마감' && (S.user || {}).role !== 'admin' ? 'disabled' : ''}> <span class="faint small">${u}</span></td>
+    <td class="r num" data-turn="${i}">${pct(c.turn)}</td></tr>`; }).join('')}</tbody></table></div>` : '';
+}
+function photoHTML(kind) {
+  return (F.photos[kind] || []).map((p, i) => `<div class="th"><img data-ph="${esc(p.id)}" alt="">${`<button type="button" class="rm" data-prm="${kind}:${i}">×</button>`}</div>`).join('')
+    + `<div class="add" data-padd="${kind}">＋<br>사진 추가</div>`;
+}
+function renderPhotos() { ['event', 'invoice'].forEach(k => { $('#ph-' + k).innerHTML = photoHTML(k); }); fillThumbs($('#pf')); }
+function syncStore() {
+  const di = dinfo(F.dealer);
+  $('#fOwnerTxt').value = F.dealer ? `${di.o} / ${di.g}` : '';
+  $('#dl-store').innerHTML = F.dealer ? storesOf(F.dealer).map(s => `<option value="${esc(s.n)}">`).join('') : '';
+  const w = [];
+  if (F.dealer && di.orphan) w.push(`'${F.dealer}' 대리점은 대리점구분 시트에 없어 담당이 지정되지 않았습니다.`);
+  if (F.store && F.dealer && !S.smap.has(F.dealer + '|' + F.store)) w.push('주요점포 목록에 없는 점포입니다. 직접 입력으로 저장됩니다.');
+  $('#storeWarn').innerHTML = w.map(x => `<div class="warnbox">${esc(x)}</div>`).join('');
+}
+function bindForm() {
+  const pf = $('#pf');
+  renderLines(); renderPhotos(); syncStore();
+  pf.addEventListener('input', e => {
+    const t = e.target;
+    if (t.dataset.f) {
+      F[t.dataset.f] = t.value;
+      if (t.dataset.f === 'store') { const s = S.smap.get(F.dealer + '|' + F.store); if (s) { F.addr = s.a; $('[data-f="addr"]').value = s.a; } syncStore(); }
+    }
+    const li = t.closest('[data-li]');
+    if (li && t.dataset.lf) {
+      const i = +li.dataset.li, l = F.lines[i];
+      l[t.dataset.lf] = t.value;
+      if (t.dataset.lf === 'product') {
+        const p = S.pmap.get(l.product);
+        if (p) { l.pack = String(p.q); li.querySelector('[data-lf="pack"]').innerHTML = packOpts(l); }
+        else li.querySelector('[data-lf="pack"]').innerHTML = l.product ? packOpts(l) : '<option value="">품목 먼저</option>';
+      }
+      if (t.dataset.lf === 'pack' || t.dataset.lf === 'product') { const k = num(l.pack); li.querySelector('[data-lf="unit"] option[value="box"]').textContent = '박스' + (k ? `(${k}입)` : ''); }
+      $(`[data-calc="${i}"]`).innerHTML = calcHTML(l);
+      renderResults();
+    }
+    if (t.dataset.sold != null) { const i = +t.dataset.sold; F.lines[i].sold = t.value; $(`[data-turn="${i}"]`).textContent = pct(calcLine(F.lines[i]).turn); }
+  });
+  pf.addEventListener('change', e => { if (e.target.dataset.f === 'dealer') { F.dealer = e.target.value; F.store = ''; F.addr = ''; $('[data-f="store"]').value = ''; $('[data-f="addr"]').value = ''; syncStore(); } });
+  pf.addEventListener('click', e => {
+    const rm = e.target.closest('[data-rm]'); if (rm) { F.lines.splice(+rm.dataset.rm, 1); renderLines(); return; }
+    const add = e.target.closest('[data-padd]'); if (add) { const fi = $('#phFile'); fi.dataset.kind = add.dataset.padd; fi.value = ''; fi.click(); return; }
+    const prm = e.target.closest('[data-prm]'); if (prm) { const [k, i] = prm.dataset.prm.split(':'); F.photos[k].splice(+i, 1); renderPhotos(); return; }
+  });
+  const al = $('#addLine'); if (al) al.onclick = () => { F.lines.push(blankLine()); renderLines(); const last = $$('#lines [data-lf="product"]').pop(); last && last.focus(); };
+  $('#phFile').onchange = async e => {
+    const kind = e.target.dataset.kind, files = [...e.target.files];
+    for (const f of files) {
+      $('#fMsg').innerHTML = `<span class="spin"></span> 사진 올리는 중…`;
+      try { const d = await compress(f); const p = await Repo.upload(d); F.photos[kind].push(p); renderPhotos(); }
+      catch (err) { toast('사진 업로드 실패: ' + err.message, 4000); }
+    }
+    $('#fMsg').textContent = '';
+  };
+  $('#fSave').onclick = submitForm;
+}
+function compress(file, maxSide = 1280, q = 0.72) {
+  return new Promise((ok, no) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const s = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      ok(c.toDataURL('image/jpeg', q));
+    };
+    img.onerror = () => no(new Error('이미지를 읽을 수 없습니다'));
+    img.src = url;
+  });
+}
+async function submitForm() {
+  const err = [];
+  if (!F.dealer) err.push('대리점'); if (!F.store.trim()) err.push('점포'); if (!F.start) err.push('행사 시작일'); if (!F.end) err.push('행사 종료일');
+  if (F.start && F.end && F.end < F.start) return toast('종료일이 시작일보다 빠릅니다');
+  F.lines = F.lines.filter(l => l.product || l.qty || l.inPrice || l.salePrice);
+  if (!F.lines.length) { F.lines = [blankLine()]; renderLines(); err.push('품목 1개 이상'); }
+  if (err.length) return toast('필수 입력: ' + err.join(', '));
+  F.store = F.store.trim(); F.month = F.start.slice(0, 7);
+  const u = S.user || {};
+  if (u.role === 'dealer' && F.status === '반려') F.status = '계획';
+  const rec = { ...F }; delete rec._lock;
+  $('#fSave').disabled = true; $('#fMsg').innerHTML = '<span class="spin"></span> 저장 중…';
+  try {
+    const j = await Repo.save(rec, FBase);
+    if (j.conflict) {
+      S.recs.set(j.server.id, j.server); $('#fSave').disabled = false; $('#fMsg').textContent = '';
+      return toast('다른 사용자가 먼저 수정했습니다. 최신 내용을 불러왔으니 다시 입력해 주세요.', 5000), openForm(j.server.id);
+    }
+    S.recs.set(j.rec.id, j.rec); S.loaded.add(j.rec.month);
+    closeModal(); toast('저장했습니다');
+    if (S.per.to !== j.rec.month && S.per.mode === 'm') S.per.to = j.rec.month;
+    if (S.view === 'new') S.view = 'list';
+    render();
+  } catch (e) {
+    if (API.on && /fetch|network|Failed/i.test(e.message)) { pushOutbox(rec); S.recs.set(rec.id, rec); closeModal(); toast('네트워크 오류로 기기에 임시 보관했습니다. 연결되면 [다시 보내기]를 누르세요.', 5000); render(); }
+    else { $('#fSave').disabled = false; $('#fMsg').textContent = ''; toast('저장 실패: ' + e.message, 5000); }
+  }
+}
+
+/* =========================================================
+   상세 보기 / 점검
+   ========================================================= */
+function stampHTML(title, s) {
+  if (!s || !s.at) return '';
+  return `<div class="review"><b>${title}</b> <span class="faint small">${esc(s.by)} · ${esc(s.at.slice(0, 16).replace('T', ' '))}</span><div style="margin-top:4px">${stChip(s.result)} ${esc(s.comment || '')}</div></div>`;
+}
+function openDetail(id) {
+  const r = S.recs.get(id); if (!r) return;
+  const d = derive(r), u = S.user || {};
+  const st = r.status || '계획';
+  const isOwner = u.role === 'owner', isAdmin = u.role === 'admin';
+  const ownerCan = isOwner && ['계획', '승인', '반려'].includes(st);
+  const adminCan = isAdmin && ['계획', '승인', '최종승인'].includes(st);
+  const canEdit = isAdmin || (st !== '마감' && !(isOwner && st === '최종승인'));
+  const canClose = st === '최종승인' && !d.noRes;
+  const flow = ['계획', '승인', '최종승인', '마감'];
+  const stepIdx = st === '반려' ? -1 : flow.indexOf(st);
+  const steps = `<div class="row small" style="gap:4px;margin-bottom:12px">${['등록', '담당승인', '최종승인', '마감'].map((s, i) => `<span class="b ${st === '반려' ? 'na' : i <= stepIdx ? 'ok' : 'na'}">${i + 1}. ${s}</span>${i < 3 ? '<span class="faint">→</span>' : ''}`).join('')}${st === '반려' ? '<span class="b no">반려됨 · 대리점 수정 대기</span>' : ''}</div>`;
+  const log = (r.log || []).slice().reverse();
+  modal(`<div class="mh"><h2>${esc(r.store)}</h2>${stChip(st)}<button class="x" onclick="closeModal()">×</button></div>
+  <div class="mb"><div id="detCap" style="background:var(--bg);padding:2px">
+    ${steps}
+    <div class="fs"><div class="dl">
+      <div><span>대리점</span><b>${esc(r.dealer)}</b></div><div><span>담당 / 권역</span><b>${esc(d.di.o)} / ${esc(d.di.g)}</b></div>
+      <div><span>행사기간</span><b class="num">${esc(r.start)} ~ ${esc(r.end)}</b></div><div><span>귀속 월</span><b>${esc(r.month)}</b></div>
+      <div style="grid-column:1/-1"><span>주소</span><b>${esc(r.addr || '–')}</b></div>
+      ${r.memo ? `<div style="grid-column:1/-1"><span>메모</span><b>${esc(r.memo)}</b></div>` : ''}
+    </div></div>
+    <div class="grid2" style="gap:0 12px">${stampHTML('1차 · 담당 점검' + (st === '계획' ? ' (재제출 전 기록)' : ''), r.review)}${stampHTML('2차 · 관리자 최종 결재' + (st === '계획' || (st === '승인' && r.final && r.final.result === '반려') ? ' (이전 기록)' : ''), r.final)}</div>
+    <div class="fs"><h4><span class="n">1</span>계획${HV() ? '' : ' · 판정'}</h4><div class="tw"><table><thead><tr><th>품목</th><th class="r">입수</th><th class="r">입고</th><th class="r">점포입고가</th><th class="r">판매가</th><th class="r">정상가</th><th class="r">출고가</th><th class="r">행사율</th><th class="r">마진율</th>${HV() ? '' : '<th>판정</th>'}</tr></thead><tbody>
+      ${d.lines.map(l => `<tr><td style="white-space:normal;min-width:160px">${esc(l.product)}${l.c.warn.length ? `<div class="small" style="color:var(--warn-t)">⚠ ${esc(l.c.warn.join(', '))}</div>` : ''}</td><td class="r num">${esc(l.pack)}입</td><td class="r num">${n0(num(l.qty))}${l.unit === 'ea' ? '개' : '박스'}</td>
+        <td class="r num">${won(num(l.inPrice))}</td><td class="r num">${won(num(l.salePrice))}</td><td class="r num">${won(l.c.normal)}</td><td class="r num">${won(l.c.out)}</td>
+        <td class="r num">${pct(l.c.rate)}<div class="faint small">${esc(l.c.band || '')}</div></td><td class="r num">${pct(l.c.margin)}</td>${HV() ? '' : `<td>${verdictBadge(l.c.verdict, l.c.reasons)}${l.c.reasons.length ? `<div class="faint small">${esc(l.c.reasons.join(', '))}</div>` : ''}</td>`}</tr>`).join('')}
+    </tbody></table></div></div>
+    <div class="fs"><h4><span class="n">2</span>증빙</h4><div class="fg"><div class="f span2"><span>행사 사진 ${(r.photos?.event || []).length}장</span><div class="ph">${(r.photos?.event || []).map(p => `<div class="th"><img data-ph="${esc(p.id)}" alt=""></div>`).join('') || '<span class="b wa">⚠ 없음</span>'}</div></div>
+      <div class="f span2"><span>거래명세서 ${(r.photos?.invoice || []).length}장</span><div class="ph">${(r.photos?.invoice || []).map(p => `<div class="th"><img data-ph="${esc(p.id)}" alt=""></div>`).join('') || '<span class="b wa">⚠ 없음</span>'}</div></div></div></div>
+    <div class="fs"><h4><span class="n">3</span>결과</h4><div class="tw"><table><thead><tr><th>품목</th><th class="r">입고(낱개)</th><th class="r">판매(낱개)</th><th class="r">회전율</th><th class="r">행사 판매금액</th></tr></thead><tbody>
+      ${d.lines.map(l => `<tr><td style="white-space:normal">${esc(l.product)}</td><td class="r num">${n0(l.c.qtyEa)}</td><td class="r num">${l.c.soldEa == null ? '<span class="faint">미입력</span>' : n0(l.c.soldEa)}</td><td class="r num">${pct(l.c.turn)}</td><td class="r num">${won(l.c.saleAmt)}</td></tr>`).join('')}
+    </tbody></table></div></div>
+    ${log.length ? `<div class="review"><b>처리 이력</b><ul class="tl">${log.map(x => `<li><span class="num">${esc((x.at || '').slice(0, 16).replace('T', ' '))}</span> · ${esc(x.by)} · ${esc(stl(x.from))} → <b>${esc(stl(x.to))}</b>${x.comment ? ' · ' + esc(x.comment) : ''}</li>`).join('')}</ul></div>` : ''}
+    <div class="faint small">등록 ${esc(r.createdBy || '')} · 최종 수정 ${esc(r.updatedBy || '')} ${esc((r.updatedAt || '').slice(0, 16).replace('T', ' '))}</div>
+  </div>
+  ${ownerCan ? `<div class="review" style="margin-top:12px"><b>1차 · 담당 점검</b><textarea id="rvC" placeholder="점검 의견 (반려 시 사유를 적어주세요)" style="margin-top:6px">${esc(r.review?.comment || '')}</textarea>
+    <div class="row" style="margin-top:8px"><button class="btn good" id="rvOk">✓ 담당 승인</button><button class="btn bad" id="rvNo">✕ 반려</button>${d.no ? `<span class="small" style="color:var(--bad-t)">불가 판정 품목 ${d.no}개는 지원 대상에서 제외됩니다</span>` : ''}</div>
+    <div class="note" style="margin-top:6px">담당 승인 후 관리자가 최종승인하면 확정됩니다.</div></div>` : ''}
+  ${isOwner && st === '최종승인' ? `<div class="note" style="margin-top:12px">관리자 최종승인이 끝난 건이라 담당은 변경할 수 없습니다.</div>` : ''}
+  ${adminCan ? `<div class="review" style="margin-top:12px;border-color:var(--ink)"><b>2차 · 관리자 최종 결재</b>
+    ${st === '계획' ? `<div class="warnbox">아직 담당 점검 전입니다. 바로 최종승인하면 담당 단계를 건너뜁니다.</div>` : ''}
+    ${st === '최종승인' ? `<div class="note" style="margin-top:4px">이미 최종승인된 건입니다. 반려하면 승인이 취소되고 대리점이 다시 수정하게 됩니다.</div>` : ''}
+    <textarea id="fnC" placeholder="결재 의견 (반려 시 사유 필수)" style="margin-top:6px">${esc(r.final?.comment || '')}</textarea>
+    <div class="row" style="margin-top:8px">${st !== '최종승인' ? `<button class="btn good" id="fnOk">✓ 최종승인</button>` : ''}<button class="btn bad" id="fnNo">✕ ${st === '최종승인' ? '최종승인 취소(반려)' : '반려'}</button>${d.no ? `<span class="small" style="color:var(--bad-t)">불가 판정 품목 ${d.no}개는 지원 대상에서 제외됩니다</span>` : ''}</div></div>` : ''}
+  </div>
+  <div class="mf">
+    ${isAdmin || (st === '계획' && (u.role !== 'dealer' || r.dealer === u.name)) ? `<button class="btn bad" id="dDel">삭제</button>` : ''}
+    <span class="hspace"></span>
+    <button class="btn" id="dJpg">JPG 저장</button>
+    ${canClose && (isOwner || isAdmin || u.role === 'dealer') ? `<button class="btn" id="dClose">결과 마감</button>` : ''}
+    ${st === '마감' && isAdmin ? `<button class="btn" id="dOpen">마감 해제</button>` : ''}
+    ${canEdit ? `<button class="btn pri" id="dEdit">${!canEditPlan(r) ? '증빙·결과 입력' : '수정'}</button>` : ''}
+  </div>`);
+  fillThumbs($('#ov'));
+  const on = (id, fn) => { const e = $('#' + id); if (e) e.onclick = fn; };
+  on('dEdit', () => openForm(id));
+  on('dJpg', () => exportImage('#detCap', `행사계획_${r.dealer}_${r.store}_${r.start}`, 'jpg'));
+  on('dDel', async () => { if (!confirm(`'${r.store}' 행사계획을 삭제할까요?${API.on ? '\n사진은 구글 드라이브 휴지통으로 이동합니다.' : ''}`)) return; try { await Repo.remove([id]); S.recs.delete(id); closeModal(); toast('삭제했습니다'); render(); } catch (e) { toast('삭제 실패: ' + e.message); } });
+  const act = async (status, boxId) => {
+    const c = boxId ? $('#' + boxId).value.trim() : '';
+    if (status === '반려' && !c) return toast('반려 사유를 적어주세요');
+    try { const n = await Repo.setStatus(r, status, c); S.recs.set(n.id, n); toast(stl(status) + ' 처리했습니다'); openDetail(id); render(); }
+    catch (e) { toast('처리 실패: ' + e.message, 5000); }
+  };
+  on('rvOk', () => act('승인', 'rvC')); on('rvNo', () => act('반려', 'rvC'));
+  on('fnOk', () => act('최종승인', 'fnC')); on('fnNo', () => act('반려', 'fnC'));
+  on('dClose', () => act('마감'));
+  on('dOpen', () => act('최종승인'));
+}
+
+/* =========================================================
+   내보내기 (엑셀 / PDF / JPG)
+   ========================================================= */
+async function exportXlsx(A, label) {
+  const rows = A.lines.map(l => ({
+    '월': l.d.r.month, '대리점': l.d.r.dealer, '담당': l.d.di.o, '권역': l.d.di.g, '점포': l.d.r.store, '주소': l.d.r.addr || '',
+    '행사시작': l.d.r.start, '행사종료': l.d.r.end, '상태': stl(l.d.r.status), '품목': l.product, '판매입수': num(l.pack),
+    '입고수량': num(l.qty), '수량단위': l.unit === 'ea' ? '낱개' : '박스', '점포입고가': num(l.inPrice), '소비자판매가(행사)': num(l.salePrice),
+    '정상소비자가': l.c.normal != null ? Math.round(l.c.normal) : null, '출고가': l.c.out != null ? Math.round(l.c.out) : null,
+    '행사율': l.c.rate, '행사율구간': l.c.band || '', '대리점마진율': l.c.margin, '판정': l.c.verdict, '판정사유': l.c.reasons.join(', '),
+    '판매수량': num(l.sold), '입고(낱개)': l.c.qtyEa, '판매(낱개)': l.c.soldEa, '회전율': l.c.turn,
+    '행사사진': (l.d.r.photos?.event || []).length, '거래명세서': (l.d.r.photos?.invoice || []).length, '담당점검': l.d.r.review ? stl(l.d.r.review.result) + ' (' + l.d.r.review.by + ')' : '', '담당의견': l.d.r.review?.comment || '', '최종결재': l.d.r.final ? stl(l.d.r.final.result) + ' (' + l.d.r.final.by + ')' : '', '관리자의견': l.d.r.final?.comment || ''
+  }));
+  const dealer = A.byDealer.filter(r => r.recs > 0).map(r => ({ '대리점': r.dealer, '담당': r.owner, '권역': r.region, '참여점포': r.stores, '품목수': r.products, '행사건': r.recs, '지원': r.ok, '불가': r.no, '입고(낱개)': r.qty, '판매(낱개)': r.sold, '회전율': r.turn, '입고금액': r.inAmt }));
+  const owner = A.byOwner.map(r => ({ '담당': r.owner, '참여대리점': r.part, '담당대리점': r.total, '참여율': r.rate, '참여점포': r.stores, '행사건': r.recs, '회전율': r.turn }));
+  const prod = A.byProduct.map(r => ({ '품목': r.product, '참여점포': r.stores, '참여대리점': r.dealers, '지원': r.ok, '불가': r.no, '평균행사율': r.rate, '입고(낱개)': r.qty, '판매(낱개)': r.sold, '회전율': r.turn }));
+  if (HV()) { const strip = o => { delete o['판정']; delete o['판정사유']; delete o['지원']; delete o['불가']; return o; }; rows.forEach(strip); dealer.forEach(strip); prod.forEach(strip); }
+  const fname = `행사계획_${label.replace(/[\s~.]+/g, '_')}`;
+  try {
+    busy(true); await loadScript(CDN.xlsx);
+    const wb = XLSX.utils.book_new();
+    const add = (name, data, pctCols) => {
+      const ws = XLSX.utils.json_to_sheet(data.length ? data : [{ '안내': '데이터 없음' }]);
+      if (data.length) {
+        const head = Object.keys(data[0]);
+        ws['!cols'] = head.map(h => ({ wch: Math.max(8, Math.min(40, h.length * 2 + 2, ...data.slice(0, 200).map(r => String(r[h] ?? '').length + 2))) }));
+        pctCols.forEach(h => { const ci = head.indexOf(h); if (ci < 0) return; for (let ri = 1; ri <= data.length; ri++) { const c = ws[XLSX.utils.encode_cell({ r: ri, c: ci })]; if (c && typeof c.v === 'number') c.z = '0.0%'; } });
+      }
+      XLSX.utils.book_append_sheet(wb, ws, name);
+    };
+    add('행사품목', rows, ['행사율', '대리점마진율', '회전율']);
+    add('대리점별', dealer, ['회전율']); add('담당별', owner, ['참여율', '회전율']); add('품목별', prod, ['평균행사율', '회전율']);
+    XLSX.writeFile(wb, fname + '.xlsx');
+  } catch (e) {
+    // 오프라인일 때: CSV로 대체
+    const head = Object.keys(rows[0] || { '안내': '' });
+    const csv = '﻿' + [head.join(','), ...rows.map(r => head.map(h => { const v = r[h] ?? ''; return /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : v; }).join(','))].join('\n');
+    download(new Blob([csv], { type: 'text/csv;charset=utf-8' }), fname + '.csv');
+    toast('엑셀 라이브러리를 못 불러와 CSV로 저장했습니다');
+  } finally { busy(false); }
+}
+async function exportImage(sel, name, kind) {
+  const el = $(sel); if (!el) return;
+  busy(true);
+  try {
+    await loadScript(CDN.h2c);
+    const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#f4f3ef', useCORS: true, windowWidth: Math.max(1100, el.scrollWidth) });
+    const safe = name.replace(/[\\/:*?"<>|\s~]+/g, '_');
+    if (kind === 'jpg') { canvas.toBlob(b => download(b, safe + '.jpg'), 'image/jpeg', 0.92); }
+    else {
+      await loadScript(CDN.jspdf);
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+      const pw = 210, ph = 297, m = 8, w = pw - m * 2;
+      const pxPerMm = canvas.width / w, pageH = Math.floor((ph - m * 2) * pxPerMm);
+      for (let y = 0, i = 0; y < canvas.height; y += pageH, i++) {
+        const h = Math.min(pageH, canvas.height - y);
+        const c = document.createElement('canvas'); c.width = canvas.width; c.height = h;
+        c.getContext('2d').drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
+        if (i) pdf.addPage();
+        pdf.addImage(c.toDataURL('image/jpeg', 0.9), 'JPEG', m, m, w, h / pxPerMm);
+      }
+      pdf.save(safe + '.pdf');
+    }
+  } catch (e) { toast('저장 실패: ' + e.message, 4000); }
+  finally { busy(false); }
+}
+
+/* =========================================================
+   설정
+   ========================================================= */
+function isAdminish() { return !API.on || (S.user && S.user.role === 'admin'); }
+function viewSet() {
+  const m = S.master, orph = [...S.dmap.values()].filter(d => d.orphan);
+  const ob = outbox();
+  $('#main').innerHTML = `<div class="set">
+  <div class="card sec"><h3>사용자</h3><p class="sub">${API.on ? '비밀번호로 로그인한 사용자 · 승인·반려 권한은 구글시트 서버에서 확인합니다' : '로컬 모드: 이 기기에서 쓸 사용자를 고릅니다'}</p>
+    <div class="kv"><span class="muted">현재</span><b>${S.user ? esc(roleName(S.user)) : '선택 안 됨'}</b></div>
+    <button class="btn" style="margin-top:10px" onclick="openUser()">${API.on ? '로그아웃 / 다른 사용자로 로그인' : '사용자 변경'}</button></div>
+
+  <div class="card sec"><h3>구글시트 연결</h3><p class="sub">연결하면 모든 사용자가 같은 데이터를 봅니다. 비워두면 이 기기에만 저장(로컬 모드)</p>
+    <label class="f"><span>Apps Script 웹 앱 URL</span><input type="url" id="cUrl" value="${esc(S.cfg.url)}" placeholder="https://script.google.com/macros/s/…/exec"></label>
+    <label class="f" style="margin-top:8px"><span>토큰 (Code.gs의 TOKEN 값)</span><input type="password" id="cTok" value="${esc(S.cfg.token)}"></label>
+    <div class="row" style="margin-top:10px"><button class="btn pri" id="cSave">저장 후 연결 테스트</button><button class="btn" id="cOff">연결 해제</button><button class="btn" id="cDef">기본 연결로 되돌리기</button><span id="cMsg" class="small muted"></span></div>
+    ${ob.length ? `<div class="warnbox">미전송 ${ob.length}건이 이 기기에 남아 있습니다. <button class="btn sm" onclick="flushOutbox()">다시 보내기</button></div>` : ''}
+  </div>
+
+  <div class="card sec"><h3>마스터 데이터</h3><p class="sub">대리점구분 · 주요점포 · 제품리스트 · 제품판매입수</p>
+    <div class="kv"><span class="muted">버전</span><b>${esc(m.ver || '')}</b><span class="muted">대리점</span><b>${m.dealers.length}곳 (담당 ${owners().join(', ')})</b><span class="muted">점포</span><b>${m.stores.length}곳</b><span class="muted">제품</span><b>${m.products.length}종</b><span class="muted">판매입수</span><b>${m.packs.map(p => p + '입').join(', ')}</b></div>
+    ${orph.length ? `<div class="warnbox">점포 목록에는 있지만 대리점구분 시트에 없는 대리점: <b>${orph.map(d => esc(d.n)).join(', ')}</b> → 담당 '미지정'으로 표시됩니다.</div>` : ''}
+    <div class="row ${isAdminish() ? '' : 'hide'}" style="margin-top:10px"><button class="btn" id="mUp">마스터 엑셀 업로드</button><input type="file" id="mFile" accept=".xlsx,.xls" class="hide">${API.on ? '<span class="small muted">업로드하면 구글시트 쪽에도 저장되어 모든 사용자에게 적용됩니다</span>' : ''}</div>
+  </div>
+
+  <div class="card sec ${HV() ? 'hide' : ''}"><h3>판정 기준</h3><p class="sub">바꾸려면 HTML 파일 상단의 RULE 값을 수정하세요</p>
+    <div class="note">• 행사율 = (정상 소비자가 − 행사 소비자 판매가) ÷ 정상 소비자가<br>• 대리점 마진율 = (점포입고가 − 출고가) ÷ 점포입고가<br>• 정상 소비자가·출고가는 제품리스트 값을 <b>선택한 판매입수</b>에 맞춰 환산 (예: 24입 기본 품목을 10입으로 팔면 ×10/24)<br>
+    • <b>지원</b>: 행사율 ≥ ${RULE.RATE_MIN * 100}% 그리고 마진율 ≤ ${RULE.MARGIN_MAX * 100}% · 하나라도 어긋나면 <b>불가</b><br>• 구간: ${RULE.BANDS.map(b => b.k).join(' / ')}<br>• 회전율 = 판매수량 ÷ 입고수량 (낱개 환산)<br>• 행사는 <b>시작일이 속한 월</b>로 집계</div></div>
+
+  <div class="card sec ${isAdminish() ? '' : 'hide'}"><h3>데이터 관리</h3><p class="sub">${API.on ? '구글시트 연결 중 — 아래 작업은 공유 데이터에 반영됩니다' : '로컬 모드 — 이 기기의 브라우저에만 저장됩니다'}</p>
+    <div class="row"><button class="btn" id="dmGen">더미 데이터 생성 (최근 3개월)</button><button class="btn bad" id="dmDel">더미 데이터 삭제</button></div>
+    ${API.on ? '' : `<div class="row" style="margin-top:8px"><button class="btn" id="bkOut">백업 파일 저장(JSON)</button><button class="btn" id="bkIn">백업 복원</button><input type="file" id="bkFile" accept=".json" class="hide"></div>`}
+  </div></div>`;
+  $('#cSave').onclick = async () => {
+    S.cfg = { url: $('#cUrl').value.trim(), token: $('#cTok').value.trim() }; save('cfg', S.cfg);
+    $('#cMsg').innerHTML = '<span class="spin"></span> 확인 중';
+    try { const j = await API.call('ping'); $('#cMsg').textContent = '연결됨: ' + j.name; await pullMaster(); S.recs.clear(); S.loaded.clear(); updConn(); if (!S.user || !S.user.pin) { S.user = null; save('user', null); updUser(); openUser(); } }
+    catch (e) { $('#cMsg').textContent = '실패: ' + e.message; updConn(); }
+  };
+  $('#cDef').onclick = () => { $('#cUrl').value = DEFAULT_CFG.url; $('#cTok').value = DEFAULT_CFG.token; $('#cSave').click(); };
+  $('#cOff').onclick = () => { S.cfg = { url: '', token: '' }; save('cfg', S.cfg); S.recs.clear(); S.loaded.clear(); updConn(); render(); toast('로컬 모드로 전환했습니다'); };
+  $('#mUp').onclick = () => $('#mFile').click();
+  $('#mFile').onchange = e => e.target.files[0] && importMaster(e.target.files[0]);
+  $('#dmGen').onclick = genDummy;
+  $('#dmDel').onclick = async () => {
+    busy(true);
+    try {
+      let ids;
+      if (API.on) ids = (await Repo.list('2000-01', '2999-12')).filter(r => r.dummy).map(r => r.id);
+      else ids = (await IDB.all('records')).filter(r => r.dummy).map(r => r.id);
+      if (!ids.length) return toast('더미 데이터가 없습니다');
+      if (!confirm(`더미 데이터 ${ids.length}건을 삭제할까요?`)) return;
+      await Repo.remove(ids); ids.forEach(id => S.recs.delete(id)); toast(`${ids.length}건 삭제`);
+    } catch (e) { toast('실패: ' + e.message); } finally { busy(false); }
+  };
+  const bo = $('#bkOut'); if (bo) bo.onclick = async () => { const recs = await IDB.all('records'), photos = await IDB.all('photos'); download(new Blob([JSON.stringify({ recs, photos })], { type: 'application/json' }), `행사계획_백업_${today()}.json`); };
+  const bi = $('#bkIn'); if (bi) { bi.onclick = () => $('#bkFile').click(); $('#bkFile').onchange = async e => { try { const j = JSON.parse(await e.target.files[0].text()); for (const r of j.recs || []) await IDB.put('records', r); for (const p of j.photos || []) await IDB.put('photos', p); S.loaded.clear(); toast(`${(j.recs || []).length}건 복원`); } catch (er) { toast('복원 실패: ' + er.message); } }; }
+}
+async function importMaster(file) {
+  busy(true);
+  try {
+    await loadScript(CDN.xlsx);
+    const wb = XLSX.read(await file.arrayBuffer());
+    const sh = n => { const k = wb.SheetNames.find(x => x.replace(/\s/g, '').includes(n)); if (!k) throw new Error(`'${n}' 시트를 찾을 수 없습니다`); return XLSX.utils.sheet_to_json(wb.Sheets[k], { header: 1, defval: null }); };
+    const D = sh('대리점구분'), ST = sh('주요점포'), P = sh('제품리스트');
+    let PK = null; try { PK = sh('판매입수'); } catch (e) { }
+    // 대리점구분: '대리점' 머리글 위치를 찾아 그 아래를 읽음
+    let hr = -1, hc = -1; D.some((r, i) => { const c = (r || []).indexOf('대리점'); if (c >= 0) { hr = i; hc = c; return true; } });
+    if (hr < 0) throw new Error("대리점구분 시트에 '대리점' 머리글이 없습니다");
+    const dealers = D.slice(hr + 1).filter(r => r && r[hc] && !DEALER_ALIAS[String(r[hc]).trim()]).map(r => ({ n: String(r[hc]).trim(), o: String(r[hc + 1] || '').trim() || '미지정', g: String(r[hc + 2] || '').trim() || '미지정' }));
+    // 주요점포: 번호, 점포명, 대리점, 동, (등급), 영업소, 비고, 담당, 주소 — 주소는 마지막 열
+    const stores = ST.filter(r => r && r[1] && r[2] && !/점포명/.test(String(r[1]))).map(r => {
+      const cells = r.map(v => v == null ? '' : String(v).replace(/\n/g, ' ').trim());
+      let last = cells.length - 1; while (last > 2 && !cells[last]) last--;
+      return { n: cells[1], d: DEALER_ALIAS[cells[2]] || cells[2], a: last > 3 && /(시|군|구|도)\s/.test(cells[last]) ? cells[last] : '' };
+    });
+    const products = P.filter(r => r && r[1] && num(r[0]) && num(r[2]) != null && num(r[4]) != null).map(r => ({ n: String(r[1]).trim(), q: num(r[0]), u: Math.round(num(r[2]) * 100) / 100, c: num(r[4]) }));
+    const packs = PK ? [...new Set(PK.flat().map(v => num(String(v || '').replace('입', ''))).filter(v => v))].sort((a, b) => a - b) : S.master.packs;
+    if (!dealers.length || !stores.length || !products.length) throw new Error('읽은 데이터가 비어 있습니다');
+    const m = { ver: today(), dealers, stores, products, packs };
+    if (!confirm(`대리점 ${dealers.length} · 점포 ${stores.length} · 제품 ${products.length} · 입수 ${packs.join('/')}\n이 내용으로 마스터를 바꿀까요?`)) return;
+    setMaster(m); save('master', m);
+    if (API.on) await API.call('setMaster', { master: m });
+    toast('마스터를 갱신했습니다'); render();
+  } catch (e) { toast('마스터 업로드 실패: ' + e.message, 5000); }
+  finally { busy(false); $('#mFile') && ($('#mFile').value = ''); }
+}
+async function pullMaster() {
+  if (!API.on) return;
+  try { const j = await API.call('getMaster'); if (j.master && j.master.products) { setMaster(j.master); save('master', j.master); } } catch (e) { }
+}
+async function genDummy() {
+  if (!confirm(`최근 3개월 더미 행사 약 60건을 ${API.on ? '구글시트에' : '이 기기에'} 만들까요?`)) return;
+  busy(true);
+  const rnd = a => a[Math.floor(Math.random() * a.length)];
+  const recs = [], now = new Date();
+  const ds = [...S.dmap.values()].filter(d => !d.orphan);
+  for (let mi = 2; mi >= 0; mi--) {
+    const base = new Date(now.getFullYear(), now.getMonth() - mi, 1), m = ym(base);
+    const pick = ds.filter(() => Math.random() < 0.45);
+    for (const d of pick) {
+      const sts = storesOf(d.n); if (!sts.length) continue;
+      for (let n = 0; n < 1 + Math.floor(Math.random() * 2); n++) {
+        const s = rnd(sts), sd = 1 + Math.floor(Math.random() * 18), ed = Math.min(sd + 6 + Math.floor(Math.random() * 7), 28);
+        const lines = [];
+        for (let j = 0; j < 1 + Math.floor(Math.random() * 3); j++) {
+          const p = rnd(S.master.products), k = Math.random() < 0.15 ? rnd(S.master.packs) : p.q;
+          const normal = p.c / p.q * k, out = p.u * k;
+          const rate = rnd([0.08, 0.15, 0.2, 0.22, 0.25, 0.3, 0.33, 0.4, 0.45, 0.52]);
+          const mg = rnd([0.06, 0.08, 0.1, 0.12, 0.14, 0.15, 0.18, 0.22]);
+          const qty = 2 + Math.floor(Math.random() * 20);
+          const done = mi > 0 || Math.random() < 0.3;
+          lines.push({ product: p.n, pack: String(k), qty: String(qty), unit: 'box', inPrice: String(Math.round(out / (1 - mg) / 10) * 10), salePrice: String(Math.round(normal * (1 - rate) / 10) * 10), sold: done ? String(Math.round(qty * (0.4 + Math.random() * 0.6))) : '' });
+        }
+        const status = mi > 0 ? rnd(['마감', '마감', '최종승인', '반려']) : rnd(['계획', '계획', '승인', '승인', '최종승인', '반려']);
+        const at = new Date().toISOString();
+        const review = status !== '계획' ? { by: d.o, at, result: status === '반려' ? '반려' : '승인', comment: status === '반려' ? '행사가 재확인 필요' : '' } : null;
+        const final = ['최종승인', '마감'].includes(status) ? { by: '관리자', at, result: '최종승인', comment: '' } : null;
+        recs.push({ final, log: [], id: uid(), dummy: true, month: m, dealer: d.n, store: s.n, addr: s.a, start: `${m}-${String(sd).padStart(2, '0')}`, end: `${m}-${String(ed).padStart(2, '0')}`, lines, photos: { event: [], invoice: [] }, memo: '', status, review, createdAt: new Date().toISOString(), createdBy: d.n, updatedBy: '더미' });
+      }
+    }
+  }
+  try { await Repo.saveMany(recs); S.recs.clear(); S.loaded.clear(); toast(`더미 ${recs.length}건 생성`); go('dash'); }
+  catch (e) { toast('생성 실패: ' + e.message); } finally { busy(false); }
+}
+
+/* =========================================================
+   사용자 선택
+   ========================================================= */
+function openUser() {
+  const u = S.user || { role: 'dealer', name: '' };
+  const secure = API.on;
+  modal(`<div class="mh"><h2>${secure ? '로그인' : '사용자 선택'}</h2>${S.user ? '<button class="x" onclick="closeModal()">×</button>' : ''}</div>
+  <div class="mb"><div class="fs">
+    <div class="seg" id="uRole" style="margin-bottom:12px"><button data-r="dealer">대리점</button><button data-r="owner">영업담당</button><button data-r="admin">관리자</button></div>
+    <label class="f" id="uNameWrap"><span id="uNameL">이름</span><select id="uName"></select><input type="text" id="uNameT" class="hide" placeholder="사용자 탭에 등록된 이름"></label>
+    ${secure ? `<label class="f" style="margin-top:10px"><span>비밀번호</span><input type="password" id="uPin" inputmode="numeric" autocomplete="current-password" placeholder="관리자에게 받은 비밀번호"></label>` : ''}
+    <div id="uErr" class="small" style="color:var(--bad-t);margin-top:8px"></div>
+    ${secure ? `<details id="uConn" style="margin-top:10px"><summary class="small muted" style="cursor:pointer">연결 설정 (URL·토큰 변경)</summary>
+      <label class="f" style="margin-top:8px"><span>Apps Script 웹 앱 URL</span><input type="url" id="ucUrl" value="${esc(S.cfg.url)}"></label>
+      <label class="f" style="margin-top:6px"><span>토큰 (Code.gs의 TOKEN 값)</span><input type="text" id="ucTok" value="${esc(S.cfg.token)}"></label>
+      <div class="row" style="margin-top:8px"><button class="btn sm" id="ucSave">저장 후 연결 확인</button><button class="btn sm" id="ucDef">기본값으로</button></div>
+    </details>` : ''}
+    <p class="note" style="margin-top:10px">• 대리점: 자기 대리점 계획만 등록·조회<br>• 영업담당: 대리점 계획을 점검(승인/반려)<br>• 관리자: 담당 승인건 최종승인·반려, 전체 수정, 마스터 관리
+    ${secure ? '<br>• 비밀번호는 구글시트 [사용자] 탭에서 관리자가 관리합니다' : '<br>• 로컬 모드라 비밀번호 없이 들어갑니다 (이 기기에만 저장)'}</p>
+  </div></div>
+  <div class="mf">${S.user ? '<button class="btn" id="uOut">로그아웃</button>' : ''}${secure ? '<button class="btn" id="uCheck">연결 확인</button>' : ''}<span class="hspace"></span><button class="btn pri" id="uOk">${secure ? '로그인' : '확인'}</button></div>`);
+  let role = u.role;
+  const draw = () => {
+    $$('#uRole button').forEach(b => b.classList.toggle('on', b.dataset.r === role));
+    const admin = role === 'admin';
+    $('#uName').classList.toggle('hide', admin);
+    $('#uNameT').classList.toggle('hide', !admin);
+    $('#uNameWrap').classList.toggle('hide', admin && !secure);
+    $('#uNameL').textContent = role === 'dealer' ? '대리점' : role === 'owner' ? '담당자' : '관리자 이름';
+    if (admin) $('#uNameT').value = u.role === 'admin' ? u.name : '관리자';
+    const opts = role === 'dealer' ? dealersOf() : owners();
+    $('#uName').innerHTML = opts.map(o => `<option ${u.name === o ? 'selected' : ''}>${esc(o)}</option>`).join('');
+  };
+  $$('#uRole button').forEach(b => b.onclick = () => { role = b.dataset.r; $('#uErr').textContent = ''; draw(); });
+  draw();
+  const out = $('#uOut'); if (out) out.onclick = () => { S.user = null; save('user', null); S.recs.clear(); S.loaded.clear(); updUser(); openUser(); };
+  const done = (user) => {
+    S.user = user; save('user', user);
+    S.f = { region: '', owner: user.role === 'owner' ? user.name : '', dealer: '' };
+    S.recs.clear(); S.loaded.clear();
+    closeModal(); updUser(); render();
+  };
+  const submit = async () => {
+    const name = role === 'admin' ? ($('#uNameT').value.trim() || '관리자') : $('#uName').value;
+    if (!secure) return done({ role, name: role === 'admin' ? '관리자' : name });
+    const pin = $('#uPin').value.trim();
+    if (!pin) return $('#uErr').textContent = '비밀번호를 입력하세요';
+    $('#uOk').disabled = true; $('#uErr').innerHTML = '<span class="spin"></span> 확인 중';
+    try { await API.call('login', { auth: { role, name, pin } }); done({ role, name, pin }); }
+    catch (e) { $('#uErr').innerHTML = loginHelp(e.message); $('#uOk').disabled = false; if (/토큰|fetch|Failed|서버 응답|알 수 없는 요청/i.test(e.message) && $('#uConn')) $('#uConn').open = true; }
+  };
+  const ucs = $('#ucSave'); if (ucs) ucs.onclick = () => {
+    const url = $('#ucUrl').value.trim(), token = $('#ucTok').value.trim();
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(url)) return $('#uErr').innerHTML = loginHelp('URL 형식 오류') + '<div class="warnbox" style="margin-top:6px">URL은 https://script.google.com/macros/s/…/exec 형태여야 합니다.</div>';
+    S.cfg = { url, token }; save('cfg', S.cfg); updConn(); $('#uCheck').click();
+  };
+  const ucd = $('#ucDef'); if (ucd) ucd.onclick = () => { $('#ucUrl').value = DEFAULT_CFG.url; $('#ucTok').value = DEFAULT_CFG.token; };
+  const ck = $('#uCheck'); if (ck) ck.onclick = async () => {
+    $('#uErr').innerHTML = '<span class="spin"></span> 연결 확인 중';
+    try {
+      const j = await API.call('ping');
+      if (!j.version) $('#uErr').innerHTML = loginHelp('알 수 없는 요청: login');
+      else if (!j.users) $('#uErr').innerHTML = loginHelp('사용자가 등록되어 있지 않습니다');
+      else $('#uErr').innerHTML = `<span style="color:var(--good-t)">✓ 연결 정상 · ${esc(j.name)} · 등록 사용자 ${j.users}명</span><br>그래도 로그인이 안 되면 시트 [사용자] 탭의 구분·이름·비밀번호를 확인하세요.`;
+    } catch (e) { $('#uErr').innerHTML = loginHelp(e.message); if ($('#uConn')) $('#uConn').open = true; }
+  };
+  $('#uOk').onclick = submit;
+  const pinEl = $('#uPin'); if (pinEl) pinEl.onkeydown = e => { if (e.key === 'Enter') submit(); };
+}
+function loginHelp(msg) {
+  const m = String(msg || '');
+  let tip = '';
+  if (/알 수 없는 요청|login/.test(m) && !/비밀번호|등록/.test(m)) tip = '구글시트의 Apps Script가 아직 <b>예전 버전</b>입니다. 새 Code.gs로 교체·저장한 뒤 <b>[배포] → [배포 관리] → 연필 → 버전: 새 버전 → [배포]</b>를 해주세요.';
+  else if (/등록되어 있지 않/.test(m)) tip = 'Apps Script에서 <b>사용자_초기화</b> 함수를 실행했는지, [사용자] 탭의 <b>구분(대리점/영업담당/관리자)과 이름</b>이 정확한지 확인하세요.';
+  else if (/비밀번호가 맞지/.test(m)) tip = '[사용자] 탭에서 바꾼 비밀번호를 다시 확인하세요. 칸에 공백·소수점(예: 1234.0)이 들어가지 않았는지도 봐주세요.';
+  else if (/잠겼/.test(m)) tip = '10분 뒤 다시 시도하세요.';
+  else if (/토큰/.test(m)) tip = 'Code.gs 맨 위 TOKEN 값이 <b>5593445</b>인지 확인하세요. 바꿨다면 앱 [설정]의 토큰도 같게 맞춰야 합니다.';
+  else if (/fetch|network|Failed|서버 응답/i.test(m)) tip = '인터넷 연결이나 웹 앱 URL을 확인하세요. 배포 시 액세스 권한이 <b>모든 사용자</b>인지도 확인하세요.';
+  return esc(m) + (tip ? `<div class="warnbox" style="margin-top:6px">${tip}</div>` : '');
+}
+function roleName(u) { return u.role === 'admin' ? `관리자${u.name && u.name !== '관리자' ? ' · ' + u.name : ''}` : u.role === 'owner' ? `영업담당 · ${u.name}` : `대리점 · ${u.name}`; }
+function updUser() { $('#userChip').textContent = S.user ? roleName(S.user) : '사용자 선택'; }
+function updConn() { const c = $('#conn'); c.className = 'conn ' + (API.on ? 'on' : 'off'); c.textContent = API.on ? '구글시트 연결' : '로컬 저장'; c.title = API.on ? S.cfg.url : '이 기기에만 저장됩니다'; }
+
+/* =========================================================
+   라우팅
+   ========================================================= */
+function go(v) { S.view = v; render(); }
+async function render() {
+  if (!S.user) { $('#main').innerHTML = '<div class="card empty">로그인 후 이용할 수 있습니다.<br><br><button class="btn pri" onclick="openUser()">로그인</button></div>'; return; }
+  $$('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === S.view));
+  const ob = outbox();
+  if (S.view === 'dash') await viewDash();
+  else if (S.view === 'list') await viewList();
+  else if (S.view === 'set') viewSet();
+  else if (S.view === 'new') { S.view = 'list'; await viewList(); $$('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.v === 'new')); openForm(); }
+  if (ob.length && S.view !== 'set') $('#main').insertAdjacentHTML('afterbegin', `<div class="outbox">⚠ 서버로 못 보낸 저장 ${ob.length}건이 이 기기에 있습니다 <button class="btn sm" onclick="flushOutbox()">다시 보내기</button></div>`);
+}
+$$('#tabs button').forEach(b => b.onclick = () => go(b.dataset.v));
+
+(async function init() {
+  const lm = load('master', null);
+  setMaster(lm && lm.products && (!EMBED_MASTER || (lm.ver || '') >= (EMBED_MASTER.ver || '')) ? lm : EMBED_MASTER);
+  if (API.on && S.user && !S.user.pin) { S.user = null; save('user', null); }
+  updUser(); updConn();
+  if (S.user && S.user.role === 'owner') S.f.owner = S.user.name;
+  if (API.on) pullMaster().then(() => S.view === 'set' && render());
+  if (!S.user) { $('#main').innerHTML = '<div class="card empty">로그인 후 이용할 수 있습니다.<br><br><button class="btn pri" onclick="openUser()">로그인</button></div>'; return openUser(); }
+  await render();
+})();
+</script>
+</body>
+</html>
